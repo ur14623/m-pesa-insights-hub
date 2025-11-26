@@ -4,12 +4,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Calendar as CalendarIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
-const generateMockData = (period: string) => {
-  if (period === "daily") {
+const generateMockData = (period: string, startDate?: Date, endDate?: Date, frequency?: string) => {
+  if (period === "custom" && startDate && endDate && frequency) {
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (frequency === "daily") {
+      return Array.from({ length: diffDays + 1 }, (_, i) => ({
+        date: new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        value: Math.floor(Math.random() * 5000) + 10000,
+      }));
+    } else {
+      // Monthly aggregation
+      const months = Math.max(1, Math.ceil(diffDays / 30));
+      return Array.from({ length: months }, (_, i) => ({
+        date: `Month ${i + 1}`,
+        value: Math.floor(Math.random() * 150000) + 300000,
+      }));
+    }
+  } else if (period === "daily") {
     return Array.from({ length: 7 }, (_, i) => ({
       date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
       value: Math.floor(Math.random() * 5000) + 10000,
@@ -45,6 +66,9 @@ const metricTitles: Record<string, string> = {
 export default function MetricDetail() {
   const { metricId } = useParams();
   const [chartPeriod, setChartPeriod] = useState("30-day");
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [frequency, setFrequency] = useState<string>("daily");
 
   const metricTitle = metricTitles[metricId || ""] || "Metric";
 
@@ -58,8 +82,9 @@ export default function MetricDetail() {
   const ninetyDayValue = ninetyDayData.reduce((acc, d) => acc + d.value, 0);
 
   // Dynamic chart/table data
-  const chartData = generateMockData(chartPeriod);
+  const chartData = generateMockData(chartPeriod, startDate, endDate, frequency);
   const mean = chartPeriod === "30-day" ? chartData.reduce((acc, d) => acc + d.value, 0) / chartData.length : null;
+  const isMonthlyView = chartPeriod === "90-day" || (chartPeriod === "custom" && frequency === "monthly");
 
   return (
     <div className="space-y-6">
@@ -72,12 +97,7 @@ export default function MetricDetail() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Daily</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Daily</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-primary">{dailyValue.toLocaleString()}</p>
@@ -87,12 +107,7 @@ export default function MetricDetail() {
 
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">30-Day</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
+            <CardTitle className="text-sm font-medium text-muted-foreground">30-Day</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-primary">{thirtyDayValue.toLocaleString()}</p>
@@ -102,12 +117,7 @@ export default function MetricDetail() {
 
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">90-Day</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
+            <CardTitle className="text-sm font-medium text-muted-foreground">90-Day</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-primary">{ninetyDayValue.toLocaleString()}</p>
@@ -119,18 +129,92 @@ export default function MetricDetail() {
       {/* Tabs - Chart & Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Analysis</CardTitle>
-            <Select value={chartPeriod} onValueChange={setChartPeriod}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Daily (7 days)</SelectItem>
-                <SelectItem value="30-day">30-Day</SelectItem>
-                <SelectItem value="90-day">90-Day (3 months)</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Analysis</CardTitle>
+              <Select value={chartPeriod} onValueChange={setChartPeriod}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily (7 days)</SelectItem>
+                  <SelectItem value="30-day">30-Day</SelectItem>
+                  <SelectItem value="90-day">90-Day (3 months)</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {chartPeriod === "custom" && (
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Start Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[200px] justify-start text-left font-normal",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">End Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[200px] justify-start text-left font-normal",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Frequency</label>
+                  <Select value={frequency} onValueChange={setFrequency}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -165,22 +249,43 @@ export default function MetricDetail() {
                 </Button>
               </div>
               <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Metric Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {chartData.map((row, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{row.date}</TableCell>
-                        <TableCell className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
+                {isMonthlyView ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        {chartData.map((row, idx) => (
+                          <TableHead key={idx} className="text-right">{row.date}</TableHead>
+                        ))}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">Metric Value</TableCell>
+                        {chartData.map((row, idx) => (
+                          <TableCell key={idx} className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
+                        ))}
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Metric Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {chartData.map((row, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{row.date}</TableCell>
+                          <TableCell className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
             </TabsContent>
           </Tabs>

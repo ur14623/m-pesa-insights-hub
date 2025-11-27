@@ -1,5 +1,6 @@
 import { LayoutDashboard, TrendingUp, Users, Smartphone, Download, UserPlus, UserMinus, ArrowUpCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const metrics = [
-  { title: "Dashboard Overview", url: "/", icon: LayoutDashboard },
   { title: "Active Total", url: "/metric/active-total", icon: TrendingUp },
   { title: "Active New", url: "/metric/active-new", icon: UserPlus },
   { title: "Active Existing", url: "/metric/active-existing", icon: Users },
@@ -33,14 +33,41 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={!open ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-primary-foreground">Metrics</SidebarGroupLabel>
+      <SidebarContent className="bg-sidebar">
+        <SidebarGroup className="px-2 py-4">
+          <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider px-3 mb-2">
+            Dashboard
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="rounded-lg hover:bg-sidebar-accent transition-all">
+                  <NavLink 
+                    to="/" 
+                    end
+                    className="hover:bg-sidebar-accent"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    {open && <span>Dashboard Overview</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <Separator className="mx-3 my-2" />
+
+        <SidebarGroup className="px-2 py-2">
+          <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider px-3 mb-2">
+            Metrics
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
               {metrics.map((metric) => (
                 <SidebarMenuItem key={metric.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="rounded-lg hover:bg-sidebar-accent transition-all">
                     <NavLink
                       to={metric.url}
                       end

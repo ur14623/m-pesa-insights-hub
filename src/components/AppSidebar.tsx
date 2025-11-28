@@ -33,23 +33,38 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={!open ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarContent className="bg-sidebar">
-        <SidebarGroup className="px-2 py-4">
-          <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider px-3 mb-2">
-            Dashboard
+      <SidebarContent className="bg-sidebar border-r border-sidebar-border shadow-elegant">
+        {/* Header Section */}
+        {open && (
+          <div className="px-4 py-6 border-b border-sidebar-border/50">
+            <div className="relative inline-block">
+              <h2 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
+                CVM Metrics
+              </h2>
+              <div className="absolute -inset-2 bg-gradient-primary opacity-20 blur-xl -z-10" />
+            </div>
+            <p className="text-xs text-sidebar-foreground/60 mt-1">Real-time analytics</p>
+          </div>
+        )}
+
+        {/* Dashboard Section */}
+        <SidebarGroup className="px-3 py-4">
+          <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-3 flex items-center gap-2">
+            {open && "Dashboard"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="rounded-lg hover:bg-sidebar-accent transition-all">
+                <SidebarMenuButton asChild className="group relative overflow-hidden rounded-xl hover:bg-sidebar-accent/80 transition-all duration-300 my-1">
                   <NavLink 
                     to="/" 
                     end
-                    className="hover:bg-sidebar-accent"
-                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    className="relative z-10"
+                    activeClassName="bg-gradient-primary text-white font-semibold shadow-elegant"
                   >
-                    <LayoutDashboard className="h-4 w-4" />
-                    {open && <span>Dashboard Overview</span>}
+                    <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity" />
+                    <LayoutDashboard className="h-5 w-5 transition-transform group-hover:scale-110" />
+                    {open && <span className="text-sm">Dashboard Overview</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -57,25 +72,27 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <Separator className="mx-3 my-2" />
+        <Separator className="mx-4 my-2 bg-sidebar-border/30" />
 
-        <SidebarGroup className="px-2 py-2">
-          <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider px-3 mb-2">
-            Metrics
+        {/* Metrics Section */}
+        <SidebarGroup className="px-3 py-2 flex-1 overflow-y-auto">
+          <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-3 flex items-center gap-2 sticky top-0 bg-sidebar z-10 py-2">
+            {open && "Metrics"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {metrics.map((metric) => (
-                <SidebarMenuItem key={metric.title}>
-                  <SidebarMenuButton asChild className="rounded-lg hover:bg-sidebar-accent transition-all">
+            <SidebarMenu className="space-y-0.5">
+              {metrics.map((metric, idx) => (
+                <SidebarMenuItem key={metric.title} className="animate-fade-in" style={{ animationDelay: `${idx * 30}ms` }}>
+                  <SidebarMenuButton asChild className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">
                     <NavLink
                       to={metric.url}
                       end
-                      className="hover:bg-sidebar-accent"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      className="relative z-10"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-2 border-sidebar-primary"
                     >
-                      <metric.icon className="h-4 w-4" />
-                      {open && <span>{metric.title}</span>}
+                      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
+                      <metric.icon className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
+                      {open && <span className="text-sm transition-colors">{metric.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -83,6 +100,19 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Footer */}
+        {open && (
+          <div className="px-4 py-4 border-t border-sidebar-border/50 mt-auto">
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <div className="text-xs text-sidebar-foreground/60">
+                <p className="font-medium text-sidebar-foreground">System Active</p>
+                <p className="text-sidebar-foreground/40">All metrics live</p>
+              </div>
+            </div>
+          </div>
+        )}
       </SidebarContent>
     </Sidebar>
   );

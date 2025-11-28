@@ -21,14 +21,15 @@ export function MetricCard({ title, period, onNavigate }: MetricCardProps) {
   const periodLabel = period === "daily" ? "Daily" : period === "30-day" ? "30-Day" : "90-Day";
 
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigate}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+    <Card className="group relative overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 cursor-pointer border-border/50 animate-fade-in bg-gradient-card" onClick={onNavigate}>
+      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+      <CardHeader className="pb-3 relative">
+        <CardTitle className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="bg-secondary rounded-lg p-6 text-center">
-          <p className="text-sm text-muted-foreground mb-2">{periodLabel}</p>
-          <p className="text-3xl font-bold text-primary">{value.toLocaleString()}</p>
+      <CardContent className="relative">
+        <div className="bg-gradient-subtle rounded-xl p-6 text-center border border-primary/10 group-hover:border-primary/20 transition-colors">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-medium">{periodLabel}</p>
+          <p className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">{value.toLocaleString()}</p>
         </div>
       </CardContent>
     </Card>

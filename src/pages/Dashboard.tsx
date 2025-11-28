@@ -52,21 +52,22 @@ export default function Dashboard() {
   const meanValue = period === "30-day" ? data.reduce((acc, d) => acc + d.value, 0) / data.length : null;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground">MPESA CVM Dashboard</h2>
-        <p className="text-muted-foreground mt-1">Overview of all key metrics</p>
+    <div className="space-y-8 animate-fade-in">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-primary opacity-5 blur-3xl -z-10" />
+        <h2 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">MPESA CVM Dashboard</h2>
+        <p className="text-muted-foreground mt-2 text-base">Real-time overview of all key metrics</p>
       </div>
 
       <Tabs value={viewTab} onValueChange={(v) => setViewTab(v as any)} className="w-full">
-        <div className="flex items-center justify-between mb-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="card">Cards View</TabsTrigger>
-            <TabsTrigger value="chart">Chart View</TabsTrigger>
+        <div className="flex items-center justify-between mb-8 gap-4">
+          <TabsList className="grid w-full grid-cols-2 bg-card shadow-card border border-border/50 p-1.5">
+            <TabsTrigger value="card" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-elegant">Cards View</TabsTrigger>
+            <TabsTrigger value="chart" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-elegant">Chart View</TabsTrigger>
           </TabsList>
           
           <Select value={period} onValueChange={(v) => setPeriod(v as any)}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-44 bg-card shadow-card border-border/50 hover:border-primary/50 transition-colors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -79,22 +80,36 @@ export default function Dashboard() {
 
         <TabsContent value="chart" className="space-y-4 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {metrics.map((metric) => (
-              <div key={metric.slug} className="border rounded-lg p-4 space-y-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">{metric.title}</h3>
-                  <Button variant="ghost" size="icon">
+            {metrics.map((metric, idx) => (
+              <div key={metric.slug} className="group relative bg-gradient-card border border-border/50 rounded-xl p-5 space-y-4 shadow-card hover:shadow-card-hover transition-all duration-300 animate-fade-in" style={{ animationDelay: `${idx * 50}ms` }}>
+                <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-xl" />
+                <div className="flex items-center justify-between relative z-10">
+                  <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">{metric.title}</h3>
+                  <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary">
                     <Download className="h-4 w-4" />
                   </Button>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                    {meanValue && <ReferenceLine y={meanValue} stroke="hsl(var(--chart-2))" strokeDasharray="3 3" label="Mean" />}
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        boxShadow: 'var(--shadow-card)'
+                      }}
+                    />
+                    <Bar dataKey="value" fill="url(#colorGradient)" radius={[6, 6, 0, 0]} />
+                    {meanValue && <ReferenceLine y={meanValue} stroke="hsl(var(--chart-2))" strokeDasharray="3 3" label={{ value: "Mean", fill: 'hsl(var(--chart-2))' }} />}
+                    <defs>
+                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8}/>
+                        <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3}/>
+                      </linearGradient>
+                    </defs>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -104,13 +119,14 @@ export default function Dashboard() {
 
         <TabsContent value="card" className="space-y-4 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {metrics.map((metric) => (
-              <MetricCard
-                key={metric.slug}
-                title={metric.title}
-                period={period}
-                onNavigate={() => navigate(`/metric/${metric.slug}`)}
-              />
+            {metrics.map((metric, idx) => (
+              <div key={metric.slug} className="animate-scale-in" style={{ animationDelay: `${idx * 50}ms` }}>
+                <MetricCard
+                  title={metric.title}
+                  period={period}
+                  onNavigate={() => navigate(`/metric/${metric.slug}`)}
+                />
+              </div>
             ))}
           </div>
         </TabsContent>

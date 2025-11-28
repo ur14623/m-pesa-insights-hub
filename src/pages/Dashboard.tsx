@@ -45,7 +45,7 @@ const generateMockData = (period: string) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [viewTab, setViewTab] = useState<"chart" | "card" | "table">("card");
+  const [viewTab, setViewTab] = useState<"chart" | "card">("card");
   const [period, setPeriod] = useState<"daily" | "30-day" | "90-day">("daily");
 
   const data = generateMockData(period);
@@ -60,10 +60,9 @@ export default function Dashboard() {
 
       <Tabs value={viewTab} onValueChange={(v) => setViewTab(v as any)} className="w-full">
         <div className="flex items-center justify-between mb-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="card">Cards View</TabsTrigger>
             <TabsTrigger value="chart">Chart View</TabsTrigger>
-            <TabsTrigger value="table">Table View</TabsTrigger>
           </TabsList>
           
           <Select value={period} onValueChange={(v) => setPeriod(v as any)}>
@@ -79,8 +78,7 @@ export default function Dashboard() {
         </div>
 
         <TabsContent value="chart" className="space-y-4 mt-6">
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[600px] overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {metrics.map((metric) => (
               <div key={metric.slug} className="border rounded-lg p-4 space-y-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
@@ -105,8 +103,7 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="card" className="space-y-4 mt-6">
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[600px] overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {metrics.map((metric) => (
               <MetricCard
                 key={metric.slug}
@@ -118,38 +115,6 @@ export default function Dashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="table" className="space-y-4 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[600px] overflow-y-auto">
-            {metrics.map((metric) => (
-              <div key={metric.slug} className="border rounded-lg p-4 space-y-2 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-sm">{metric.title}</h3>
-                  <Button variant="ghost" size="icon">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.slice(0, 5).map((row, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="text-sm">{row.date}</TableCell>
-                          <TableCell className="text-right text-sm font-medium">{row.value.toLocaleString()}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

@@ -36,19 +36,19 @@ export function AppSidebar() {
       <SidebarContent className="bg-sidebar border-r border-sidebar-border shadow-elegant flex flex-col h-full">
         {/* Header Section */}
         {open && (
-          <div className="px-4 py-5 border-b border-sidebar-border/50 flex-shrink-0">
+          <div className="px-4 py-3 border-b border-sidebar-border/50 flex-shrink-0">
             <div className="relative inline-block">
-              <h2 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <h2 className="text-base font-bold bg-gradient-primary bg-clip-text text-transparent">
                 CVM Metrics
               </h2>
               <div className="absolute -inset-2 bg-gradient-primary opacity-20 blur-xl -z-10" />
             </div>
-            <p className="text-xs text-sidebar-foreground/60 mt-1">Real-time analytics</p>
+            <p className="text-xs text-sidebar-foreground/60 mt-0.5">Real-time analytics</p>
           </div>
         )}
 
         {/* Dashboard Section */}
-        <SidebarGroup className="px-3 py-4 flex-shrink-0">
+        <SidebarGroup className="px-3 py-2 flex-shrink-0">
           <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-3 flex items-center gap-2">
             {open && "Dashboard"}
           </SidebarGroupLabel>
@@ -72,16 +72,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <Separator className="mx-4 my-2 bg-sidebar-border/30 flex-shrink-0" />
+        <Separator className="mx-4 my-1 bg-sidebar-border/30 flex-shrink-0" />
 
-        {/* Metrics Section - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-3 py-2 min-h-0">
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-3 flex items-center gap-2 sticky top-0 bg-sidebar z-10 py-2">
-              {open && "Metrics"}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-0.5">
+        {/* Metrics Section */}
+        <SidebarGroup className="px-3 py-2 flex-1">
+          <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-2 flex items-center gap-2">
+            {open && "Metrics"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">
                 {metrics.map((metric, idx) => (
                   <SidebarMenuItem key={metric.title} className="animate-fade-in" style={{ animationDelay: `${idx * 30}ms` }}>
                     <SidebarMenuButton asChild className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">
@@ -100,12 +99,11 @@ export function AppSidebar() {
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
-        </div>
+        </SidebarGroup>
 
         {/* Footer */}
         {open && (
-          <div className="px-4 py-4 border-t border-sidebar-border/50 flex-shrink-0">
+          <div className="px-4 py-2 border-t border-sidebar-border/50 flex-shrink-0">
             <div className="flex items-center gap-3 px-2">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <div className="text-xs text-sidebar-foreground/60">

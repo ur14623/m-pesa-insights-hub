@@ -33,10 +33,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={!open ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarContent className="bg-sidebar border-r border-sidebar-border shadow-elegant flex flex-col h-full">
+      <SidebarContent className="bg-sidebar border-r border-sidebar-border shadow-elegant overflow-hidden">
         {/* Header Section */}
         {open && (
-          <div className="px-4 py-3 border-b border-sidebar-border/50 flex-shrink-0">
+          <div className="px-4 py-3 border-b border-sidebar-border/50">
             <div className="relative inline-block">
               <h2 className="text-base font-bold bg-gradient-primary bg-clip-text text-transparent">
                 CVM Metrics
@@ -48,7 +48,7 @@ export function AppSidebar() {
         )}
 
         {/* Metrics Section */}
-        <SidebarGroup className="px-3 py-2 flex-1">
+        <SidebarGroup className="px-3 py-2">
           <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-2 flex items-center gap-2">
             {open && "Dashboard Overview"}
           </SidebarGroupLabel>
@@ -87,19 +87,6 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* Footer */}
-        {open && (
-          <div className="px-4 py-2 border-t border-sidebar-border/50 flex-shrink-0">
-            <div className="flex items-center gap-3 px-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <div className="text-xs text-sidebar-foreground/60">
-                <p className="font-medium text-sidebar-foreground">System Active</p>
-                <p className="text-sidebar-foreground/40">All metrics live</p>
-              </div>
-            </div>
-          </div>
-        )}
       </SidebarContent>
     </Sidebar>
   );

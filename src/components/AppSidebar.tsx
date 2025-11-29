@@ -47,40 +47,27 @@ export function AppSidebar() {
           </div>
         )}
 
-        {/* Dashboard Section */}
-        <SidebarGroup className="px-3 py-2 flex-shrink-0">
-          <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-3 flex items-center gap-2">
-            {open && "Dashboard"}
+        {/* Metrics Section */}
+        <SidebarGroup className="px-3 py-2 flex-1">
+          <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-2 flex items-center gap-2">
+            {open && "Dashboard Overview"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="group relative overflow-hidden rounded-xl hover:bg-sidebar-accent/80 transition-all duration-300 my-1">
+            <SidebarMenu className="space-y-0.5">
+              <SidebarMenuItem className="animate-fade-in">
+                <SidebarMenuButton asChild className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">
                   <NavLink 
                     to="/" 
                     end
                     className="relative z-10"
-                    activeClassName="bg-gradient-primary text-white font-semibold shadow-elegant"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-2 border-sidebar-primary"
                   >
-                    <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity" />
-                    <LayoutDashboard className="h-5 w-5 transition-transform group-hover:scale-110" />
-                    {open && <span className="text-sm">Dashboard Overview</span>}
+                    <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
+                    <LayoutDashboard className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
+                    {open && <span className="text-sm transition-colors">Dashboard Overview</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <Separator className="mx-4 my-1 bg-sidebar-border/30 flex-shrink-0" />
-
-        {/* Metrics Section */}
-        <SidebarGroup className="px-3 py-2 flex-1">
-          <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-2 flex items-center gap-2">
-            {open && "Metrics"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
                 {metrics.map((metric, idx) => (
                   <SidebarMenuItem key={metric.title} className="animate-fade-in" style={{ animationDelay: `${idx * 30}ms` }}>
                     <SidebarMenuButton asChild className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">

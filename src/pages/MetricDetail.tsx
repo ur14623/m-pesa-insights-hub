@@ -84,7 +84,6 @@ export default function MetricDetail() {
   // Dynamic chart/table data
   const chartData = generateMockData(chartPeriod, startDate, endDate, frequency);
   const mean = chartPeriod === "30-day" ? chartData.reduce((acc, d) => acc + d.value, 0) / chartData.length : null;
-  const isMonthlyView = chartPeriod === "90-day" || (chartPeriod === "custom" && frequency === "monthly");
 
   return (
     <div className="space-y-6">
@@ -248,44 +247,25 @@ export default function MetricDetail() {
                   <Download className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="border rounded-lg">
-                {isMonthlyView ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        {chartData.map((row, idx) => (
-                          <TableHead key={idx} className="text-right">{row.date}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell className="font-medium">Metric Value</TableCell>
-                        {chartData.map((row, idx) => (
-                          <TableCell key={idx} className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
-                        ))}
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Metric Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+              <div className="border rounded-lg overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
                       {chartData.map((row, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>{row.date}</TableCell>
-                          <TableCell className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
-                        </TableRow>
+                        <TableHead key={idx} className="text-right">{row.date}</TableHead>
                       ))}
-                    </TableBody>
-                  </Table>
-                )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-medium">Metric Value</TableCell>
+                      {chartData.map((row, idx) => (
+                        <TableCell key={idx} className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableBody>
+                </Table>
               </div>
             </TabsContent>
           </Tabs>

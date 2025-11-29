@@ -48,14 +48,16 @@ export function AppSidebar() {
         )}
 
         {/* Metrics Section */}
-        <SidebarGroup className="px-3 py-2">
-          <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-2 flex items-center gap-2">
-            {open && "Dashboard Overview"}
-          </SidebarGroupLabel>
+        <SidebarGroup className={open ? "px-3 py-2" : "px-1 py-2"}>
+          {open && (
+            <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-widest px-3 mb-2 flex items-center gap-2">
+              Dashboard Overview
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               <SidebarMenuItem className="animate-fade-in">
-                <SidebarMenuButton asChild className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">
+                <SidebarMenuButton asChild className={`group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 ${!open ? "justify-center" : ""}`}>
                   <NavLink 
                     to="/" 
                     end
@@ -70,7 +72,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
                 {metrics.map((metric, idx) => (
                   <SidebarMenuItem key={metric.title} className="animate-fade-in" style={{ animationDelay: `${idx * 30}ms` }}>
-                    <SidebarMenuButton asChild className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">
+                    <SidebarMenuButton asChild className={`group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 ${!open ? "justify-center" : ""}`}>
                       <NavLink
                         to={metric.url}
                         end

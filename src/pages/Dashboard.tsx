@@ -52,15 +52,15 @@ export default function Dashboard() {
   const meanValue = period === "30-day" ? data.reduce((acc, d) => acc + d.value, 0) / data.length : null;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-primary opacity-5 blur-3xl -z-10" />
-        <h2 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">MPESA CVM Dashboard</h2>
-        <p className="text-muted-foreground mt-2 text-base">Real-time overview of all key metrics</p>
+        <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">MPESA CVM Dashboard</h2>
+        <p className="text-muted-foreground mt-1 text-sm">Real-time overview of all key metrics</p>
       </div>
 
       <Tabs value={viewTab} onValueChange={(v) => setViewTab(v as any)} className="w-full">
-        <div className="flex items-center justify-between mb-8 gap-4">
+        <div className="flex items-center justify-between mb-4 gap-4">
           <TabsList className="grid w-full grid-cols-2 bg-card shadow-card border border-border/50 p-1.5">
             <TabsTrigger value="card" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-elegant">Cards View</TabsTrigger>
             <TabsTrigger value="chart" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-elegant">Chart View</TabsTrigger>
@@ -78,10 +78,10 @@ export default function Dashboard() {
           </Select>
         </div>
 
-        <TabsContent value="chart" className="space-y-4 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="chart" className="space-y-3 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {metrics.map((metric, idx) => (
-              <div key={metric.slug} className="group relative bg-gradient-card border border-border/50 rounded-xl p-5 space-y-4 shadow-card hover:shadow-card-hover transition-all duration-300 animate-fade-in" style={{ animationDelay: `${idx * 50}ms` }}>
+              <div key={metric.slug} className="group relative bg-gradient-card border border-border/50 rounded-xl p-3 space-y-3 shadow-card hover:shadow-card-hover transition-all duration-300 animate-fade-in" style={{ animationDelay: `${idx * 50}ms` }}>
                 <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-xl" />
                 <div className="flex items-center justify-between relative z-10">
                   <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">{metric.title}</h3>
@@ -89,7 +89,7 @@ export default function Dashboard() {
                     <Download className="h-4 w-4" />
                   </Button>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
@@ -117,8 +117,8 @@ export default function Dashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="card" className="space-y-4 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="card" className="space-y-3 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {metrics.map((metric, idx) => (
               <div key={metric.slug} className="animate-scale-in" style={{ animationDelay: `${idx * 50}ms` }}>
                 <MetricCard

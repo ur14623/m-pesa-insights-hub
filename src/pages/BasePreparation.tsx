@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,16 +18,8 @@ interface TableStatus {
 }
 
 export default function BasePreparation() {
-  const { module } = useParams();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState(module || "existing-pinreset");
   const [postfix, setPostfix] = useState("NOV29");
-
-  useEffect(() => {
-    if (module) {
-      setActiveTab(module);
-    }
-  }, [module]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -140,43 +132,36 @@ export default function BasePreparation() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Base Preparation Dashboard
-            </h1>
-            <p className="text-muted-foreground mt-1">Configure and generate base tables for analysis</p>
-          </div>
-          <Badge variant="outline" className="text-lg px-4 py-2">{postfix} Postfix</Badge>
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            Base Preparation Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-1">Configure and generate base tables for Existing PINRESET</p>
         </div>
 
-        {/* Tab Navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-auto">
-            <TabsTrigger value="existing-pinreset" className="flex items-center gap-2 py-3">
-              🏠 Existing PINRESET
-            </TabsTrigger>
-            <TabsTrigger value="ga-pinreset" className="flex items-center gap-2 py-3">
-              👥 GA PINRESET
-            </TabsTrigger>
-            <TabsTrigger value="cbe" className="flex items-center gap-2 py-3">
-              🏦 CBE BANK
-            </TabsTrigger>
-            <TabsTrigger value="winback" className="flex items-center gap-2 py-3">
-              🔄 Winback Churner
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="existing-pinreset" className="space-y-6 mt-6">
-            {/* Configuration Card */}
-            <Card className="border-2 shadow-elegant">
-              <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-transparent">
-                <CardTitle className="flex items-center gap-2">
-                  ⚙️ BASE TABLE CONFIGURATION
-                </CardTitle>
-                <CardDescription>Configure parameters for all base tables</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
+        <div className="space-y-6">
+          {/* Configuration Card */}
+          <Card className="border-2 shadow-elegant">
+            <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-transparent">
+              <CardTitle className="flex items-center gap-2">
+                ⚙️ BASE TABLE CONFIGURATION
+              </CardTitle>
+              <CardDescription>Configure parameters for all base tables</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {/* Postfix Input */}
+              <div className="mb-6">
+                <Label htmlFor="postfix" className="text-base font-semibold">Table Postfix</Label>
+                <Input 
+                  id="postfix"
+                  type="text" 
+                  value={postfix} 
+                  onChange={(e) => setPostfix(e.target.value.toUpperCase())} 
+                  placeholder="e.g., NOV29"
+                  className="mt-2 max-w-xs"
+                />
+                <p className="text-xs text-muted-foreground mt-1">This postfix will be appended to all generated table names</p>
+              </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* VLR Attachment Card */}
                   <Card className="border-l-4 border-l-blue-500">
@@ -195,7 +180,6 @@ export default function BasePreparation() {
                         <Label>End Day</Label>
                         <Input type="number" value={vlrEndDay} onChange={(e) => setVlrEndDay(e.target.value)} />
                       </div>
-                      <Badge variant="outline" className="w-full justify-center">VLR_ATTCH_{postfix}</Badge>
                     </CardContent>
                   </Card>
 
@@ -216,7 +200,6 @@ export default function BasePreparation() {
                         <Label>End Date</Label>
                         <Input type="date" value={regEndDate} onChange={(e) => setRegEndDate(e.target.value)} />
                       </div>
-                      <Badge variant="outline" className="w-full justify-center">REGISTERED_BEFORE_{postfix}</Badge>
                     </CardContent>
                   </Card>
 
@@ -246,7 +229,6 @@ export default function BasePreparation() {
                         <Label>Until</Label>
                         <Input type="date" value={activeUntil} onChange={(e) => setActiveUntil(e.target.value)} />
                       </div>
-                      <Badge variant="outline" className="w-full justify-center">DAY_ACTIVE_{postfix}</Badge>
                     </CardContent>
                   </Card>
 
@@ -276,7 +258,6 @@ export default function BasePreparation() {
                         <Label>Until</Label>
                         <Input type="date" value={inactiveUntil} onChange={(e) => setInactiveUntil(e.target.value)} />
                       </div>
-                      <Badge variant="outline" className="w-full justify-center">DAY_NOT_ACTIVE_{postfix}</Badge>
                     </CardContent>
                   </Card>
 
@@ -293,8 +274,6 @@ export default function BasePreparation() {
                         <Label>Limit (ETB)</Label>
                         <Input type="number" step="0.01" value={balanceLimit} onChange={(e) => setBalanceLimit(e.target.value)} />
                       </div>
-                      <div className="h-[52px]" />
-                      <Badge variant="outline" className="w-full justify-center">BALANCE_THRESH_{postfix}</Badge>
                     </CardContent>
                   </Card>
 
@@ -324,7 +303,6 @@ export default function BasePreparation() {
                         <Label>Analysis Date</Label>
                         <Input type="date" value={targetedAnalysis} onChange={(e) => setTargetedAnalysis(e.target.value)} />
                       </div>
-                      <Badge variant="outline" className="w-full justify-center">TARGETED_{postfix}</Badge>
                     </CardContent>
                   </Card>
                 </div>
@@ -407,40 +385,12 @@ export default function BasePreparation() {
                         </CardContent>
                       </Card>
                     ))}
-                  </div>
+                   </div>
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
-
-          <TabsContent value="ga-pinreset" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>GA PINRESET Configuration</CardTitle>
-                <CardDescription>Coming soon...</CardDescription>
-              </CardHeader>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="cbe" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>CBE BANK Configuration</CardTitle>
-                <CardDescription>Coming soon...</CardDescription>
-              </CardHeader>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="winback" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Winback Churner Configuration</CardTitle>
-                <CardDescription>Coming soon...</CardDescription>
-              </CardHeader>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

@@ -1,0 +1,446 @@
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Link, Calendar, Users, Clock, DollarSign, Target, Rocket } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface TableStatus {
+  name: string;
+  status: "pending" | "running" | "completed" | "error";
+  time: number;
+  parameters: string;
+}
+
+export default function BasePreparation() {
+  const { module } = useParams();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState(module || "existing-pinreset");
+  const [postfix, setPostfix] = useState("NOV29");
+
+  useEffect(() => {
+    if (module) {
+      setActiveTab(module);
+    }
+  }, [module]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  // VLR Attachment
+  const [vlrStartDay, setVlrStartDay] = useState("0");
+  const [vlrEndDay, setVlrEndDay] = useState("30");
+
+  // Registered Before
+  const [regStartDate, setRegStartDate] = useState("2024-01-01");
+  const [regEndDate, setRegEndDate] = useState("2024-11-29");
+
+  // Active Users
+  const [activePeriod, setActivePeriod] = useState("90");
+  const [activeUntil, setActiveUntil] = useState("2024-11-29");
+
+  // Inactive Users
+  const [inactivePeriod, setInactivePeriod] = useState("30");
+  const [inactiveUntil, setInactiveUntil] = useState("2024-11-29");
+
+  // Balance Threshold
+  const [balanceLimit, setBalanceLimit] = useState("100.00");
+
+  // Targeted Users
+  const [targetedLookback, setTargetedLookback] = useState("90");
+  const [targetedAnalysis, setTargetedAnalysis] = useState("2024-11-29");
+
+  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>([
+    { name: `VLR_ATTCH_${postfix}`, status: "pending", time: 0, parameters: `vlr_from: ${vlrStartDay}, vlr_to: ${vlrEndDay}` },
+    { name: `REGISTERED_BEFORE_${postfix}`, status: "pending", time: 0, parameters: `start: ${regStartDate}, end: ${regEndDate}` },
+    { name: `DAY_ACTIVE_${postfix}`, status: "pending", time: 0, parameters: `range: ${activePeriod}, end: ${activeUntil}` },
+    { name: `DAY_NOT_ACTIVE_${postfix}`, status: "pending", time: 0, parameters: `range: ${inactivePeriod}, end: ${inactiveUntil}` },
+    { name: `BALANCE_THRESH_${postfix}`, status: "pending", time: 0, parameters: `threshold: ${balanceLimit} ETB` },
+    { name: `TARGETED_${postfix}`, status: "pending", time: 0, parameters: `range: ${targetedLookback}, end: ${targetedAnalysis}` },
+    { name: `PIN_RESET_BASE_${postfix}`, status: "pending", time: 0, parameters: "All pre-requisite tables" },
+  ]);
+
+  const handleGenerate = () => {
+    setIsGenerating(true);
+    setStartTime(Date.now());
+    
+    toast({
+      title: "Starting Generation",
+      description: "Base tables are being generated...",
+    });
+
+    // Simulate table generation process
+    simulateTableGeneration();
+  };
+
+  const simulateTableGeneration = () => {
+    // This would be replaced with actual API calls in production
+    const completionTimes = [12000, 8000, 15000, 12000, 8000, 10000, 5000];
+    
+    completionTimes.forEach((time, index) => {
+      setTimeout(() => {
+        setTableStatuses(prev => {
+          const updated = [...prev];
+          updated[index] = { ...updated[index], status: "running", time: 0 };
+          return updated;
+        });
+
+        // Update running time
+        const interval = setInterval(() => {
+          setTableStatuses(prev => {
+            const updated = [...prev];
+            if (updated[index].status === "running") {
+              updated[index] = { ...updated[index], time: updated[index].time + 1 };
+            }
+            return updated;
+          });
+        }, 1000);
+
+        setTimeout(() => {
+          clearInterval(interval);
+          setTableStatuses(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], status: "completed", time: time / 1000 };
+            return updated;
+          });
+
+          if (index === completionTimes.length - 1) {
+            setIsGenerating(false);
+            toast({
+              title: "Generation Complete",
+              description: "All base tables have been successfully created!",
+            });
+          }
+        }, time);
+      }, index * 2000);
+    });
+  };
+
+  const getStatusBadge = (status: TableStatus["status"]) => {
+    switch (status) {
+      case "completed":
+        return <Badge className="bg-green-500 hover:bg-green-600">🟢 Completed</Badge>;
+      case "running":
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600">🟡 Running</Badge>;
+      case "pending":
+        return <Badge variant="secondary">⚪ Pending</Badge>;
+      case "error":
+        return <Badge variant="destructive">🔴 Error</Badge>;
+    }
+  };
+
+  const completedTables = tableStatuses.filter(t => t.status === "completed").length;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              Base Preparation Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-1">Configure and generate base tables for analysis</p>
+          </div>
+          <Badge variant="outline" className="text-lg px-4 py-2">{postfix} Postfix</Badge>
+        </div>
+
+        {/* Tab Navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 h-auto">
+            <TabsTrigger value="existing-pinreset" className="flex items-center gap-2 py-3">
+              🏠 Existing PINRESET
+            </TabsTrigger>
+            <TabsTrigger value="ga-pinreset" className="flex items-center gap-2 py-3">
+              👥 GA PINRESET
+            </TabsTrigger>
+            <TabsTrigger value="cbe" className="flex items-center gap-2 py-3">
+              🏦 CBE BANK
+            </TabsTrigger>
+            <TabsTrigger value="winback" className="flex items-center gap-2 py-3">
+              🔄 Winback Churner
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="existing-pinreset" className="space-y-6 mt-6">
+            {/* Configuration Card */}
+            <Card className="border-2 shadow-elegant">
+              <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-transparent">
+                <CardTitle className="flex items-center gap-2">
+                  ⚙️ BASE TABLE CONFIGURATION
+                </CardTitle>
+                <CardDescription>Configure parameters for all base tables</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* VLR Attachment Card */}
+                  <Card className="border-l-4 border-l-blue-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Link className="h-4 w-4" />
+                        VLR ATTACHMENT
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Start Day</Label>
+                        <Input type="number" value={vlrStartDay} onChange={(e) => setVlrStartDay(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>End Day</Label>
+                        <Input type="number" value={vlrEndDay} onChange={(e) => setVlrEndDay(e.target.value)} />
+                      </div>
+                      <Badge variant="outline" className="w-full justify-center">VLR_ATTCH_{postfix}</Badge>
+                    </CardContent>
+                  </Card>
+
+                  {/* Registered Before Card */}
+                  <Card className="border-l-4 border-l-purple-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Calendar className="h-4 w-4" />
+                        REGISTERED BEFORE
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Start Date</Label>
+                        <Input type="date" value={regStartDate} onChange={(e) => setRegStartDate(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>End Date</Label>
+                        <Input type="date" value={regEndDate} onChange={(e) => setRegEndDate(e.target.value)} />
+                      </div>
+                      <Badge variant="outline" className="w-full justify-center">REGISTERED_BEFORE_{postfix}</Badge>
+                    </CardContent>
+                  </Card>
+
+                  {/* Active Users Card */}
+                  <Card className="border-l-4 border-l-green-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Users className="h-4 w-4" />
+                        ACTIVE USERS
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Period</Label>
+                        <Select value={activePeriod} onValueChange={setActivePeriod}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="30">30 days</SelectItem>
+                            <SelectItem value="60">60 days</SelectItem>
+                            <SelectItem value="90">90 days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Until</Label>
+                        <Input type="date" value={activeUntil} onChange={(e) => setActiveUntil(e.target.value)} />
+                      </div>
+                      <Badge variant="outline" className="w-full justify-center">DAY_ACTIVE_{postfix}</Badge>
+                    </CardContent>
+                  </Card>
+
+                  {/* Inactive Users Card */}
+                  <Card className="border-l-4 border-l-orange-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Clock className="h-4 w-4" />
+                        INACTIVE USERS
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Period</Label>
+                        <Select value={inactivePeriod} onValueChange={setInactivePeriod}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="15">15 days</SelectItem>
+                            <SelectItem value="30">30 days</SelectItem>
+                            <SelectItem value="60">60 days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Until</Label>
+                        <Input type="date" value={inactiveUntil} onChange={(e) => setInactiveUntil(e.target.value)} />
+                      </div>
+                      <Badge variant="outline" className="w-full justify-center">DAY_NOT_ACTIVE_{postfix}</Badge>
+                    </CardContent>
+                  </Card>
+
+                  {/* Balance Threshold Card */}
+                  <Card className="border-l-4 border-l-yellow-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <DollarSign className="h-4 w-4" />
+                        BALANCE THRESHOLD
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Limit (ETB)</Label>
+                        <Input type="number" step="0.01" value={balanceLimit} onChange={(e) => setBalanceLimit(e.target.value)} />
+                      </div>
+                      <div className="h-[52px]" />
+                      <Badge variant="outline" className="w-full justify-center">BALANCE_THRESH_{postfix}</Badge>
+                    </CardContent>
+                  </Card>
+
+                  {/* Targeted Users Card */}
+                  <Card className="border-l-4 border-l-red-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Target className="h-4 w-4" />
+                        TARGETED USERS
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Lookback</Label>
+                        <Select value={targetedLookback} onValueChange={setTargetedLookback}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="30">30 days</SelectItem>
+                            <SelectItem value="60">60 days</SelectItem>
+                            <SelectItem value="90">90 days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Analysis Date</Label>
+                        <Input type="date" value={targetedAnalysis} onChange={(e) => setTargetedAnalysis(e.target.value)} />
+                      </div>
+                      <Badge variant="outline" className="w-full justify-center">TARGETED_{postfix}</Badge>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Button 
+                  onClick={handleGenerate} 
+                  className="w-full h-14 text-lg gap-2"
+                  disabled={isGenerating}
+                >
+                  <Rocket className="h-5 w-5" />
+                  {isGenerating ? "GENERATING..." : "GENERATE ALL BASE TABLES"}
+                </Button>
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                  Create tables with specified parameters
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Progress Tracking Card */}
+            {isGenerating && (
+              <Card className="border-2 shadow-elegant animate-fade-in">
+                <CardHeader className="border-b bg-gradient-to-r from-blue-500/5 to-transparent">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      📊 PROGRESS TRACKING
+                    </CardTitle>
+                    <Badge variant="outline" className="text-base">
+                      {completedTables}/{tableStatuses.length} Tables
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-6">
+                  {/* Overall Status */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <Card>
+                      <CardContent className="pt-4">
+                        <p className="text-sm text-muted-foreground">Overall Status</p>
+                        <p className="text-lg font-semibold mt-1">
+                          {completedTables === tableStatuses.length ? "🟢 Complete" : "🟡 Running"}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4">
+                        <p className="text-sm text-muted-foreground">Elapsed Time</p>
+                        <p className="text-lg font-semibold mt-1">{Math.floor((Date.now() - startTime) / 1000)}s</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4">
+                        <p className="text-sm text-muted-foreground">Total Execution</p>
+                        <p className="text-lg font-semibold mt-1">
+                          {completedTables === tableStatuses.length 
+                            ? `${Math.floor((Date.now() - startTime) / 1000)}s` 
+                            : "-"}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Table Status List */}
+                  <div className="space-y-3">
+                    {tableStatuses.map((table, idx) => (
+                      <Card key={idx} className="overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{table.name}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{table.parameters}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {getStatusBadge(table.status)}
+                              <p className="text-sm font-mono min-w-[60px] text-right">
+                                {table.status === "completed" && `${table.time}s`}
+                                {table.status === "running" && `${table.time}s...`}
+                                {table.status === "pending" && "-"}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="ga-pinreset" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>GA PINRESET Configuration</CardTitle>
+                <CardDescription>Coming soon...</CardDescription>
+              </CardHeader>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="cbe" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>CBE BANK Configuration</CardTitle>
+                <CardDescription>Coming soon...</CardDescription>
+              </CardHeader>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="winback" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Winback Churner Configuration</CardTitle>
+                <CardDescription>Coming soon...</CardDescription>
+              </CardHeader>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

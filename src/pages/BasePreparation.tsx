@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Link, Calendar, Users, Clock, DollarSign, Target, Rocket } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link, Calendar, Users, Clock, DollarSign, Target, Rocket, Gift, Smartphone, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TableStatus {
@@ -19,10 +20,22 @@ interface TableStatus {
 
 export default function BasePreparation() {
   const { toast } = useToast();
+  const [basePrepType, setBasePrepType] = useState("existing-pinreset");
   const [postfix, setPostfix] = useState("NOV29");
   const [isGenerating, setIsGenerating] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+
+  // Table selection states
+  const [enableVlr, setEnableVlr] = useState(true);
+  const [enableRegistered, setEnableRegistered] = useState(true);
+  const [enableActive, setEnableActive] = useState(true);
+  const [enableInactive, setEnableInactive] = useState(true);
+  const [enableBalance, setEnableBalance] = useState(true);
+  const [enableTargeted, setEnableTargeted] = useState(true);
+  const [enableRewarded, setEnableRewarded] = useState(false);
+  const [enableGsm, setEnableGsm] = useState(false);
+  const [enableTopUp, setEnableTopUp] = useState(false);
 
   // VLR Attachment
   const [vlrStartDay, setVlrStartDay] = useState("0");
@@ -47,32 +60,53 @@ export default function BasePreparation() {
   const [targetedLookback, setTargetedLookback] = useState("90");
   const [targetedAnalysis, setTargetedAnalysis] = useState("2024-11-29");
 
-  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>([
-    { name: `VLR_ATTCH_${postfix}`, status: "pending", time: 0, parameters: `vlr_from: ${vlrStartDay}, vlr_to: ${vlrEndDay}` },
-    { name: `REGISTERED_BEFORE_${postfix}`, status: "pending", time: 0, parameters: `start: ${regStartDate}, end: ${regEndDate}` },
-    { name: `DAY_ACTIVE_${postfix}`, status: "pending", time: 0, parameters: `range: ${activePeriod}, end: ${activeUntil}` },
-    { name: `DAY_NOT_ACTIVE_${postfix}`, status: "pending", time: 0, parameters: `range: ${inactivePeriod}, end: ${inactiveUntil}` },
-    { name: `BALANCE_THRESH_${postfix}`, status: "pending", time: 0, parameters: `threshold: ${balanceLimit} ETB` },
-    { name: `TARGETED_${postfix}`, status: "pending", time: 0, parameters: `range: ${targetedLookback}, end: ${targetedAnalysis}` },
-    { name: `PIN_RESET_BASE_${postfix}`, status: "pending", time: 0, parameters: "All pre-requisite tables" },
-  ]);
+  // Rewarded
+  const [rewardedField1, setRewardedField1] = useState("");
+  const [rewardedField2, setRewardedField2] = useState("");
+
+  // GSM Usage
+  const [gsmField1, setGsmField1] = useState("");
+  const [gsmField2, setGsmField2] = useState("");
+
+  // MPESA Top Up
+  const [topUpField1, setTopUpField1] = useState("");
+  const [topUpField2, setTopUpField2] = useState("");
+
+  const getAllTables = () => {
+    const tables: TableStatus[] = [];
+    if (enableVlr) tables.push({ name: `VLR_ATTCH_${postfix}`, status: "pending", time: 0, parameters: `vlr_from: ${vlrStartDay}, vlr_to: ${vlrEndDay}` });
+    if (enableRegistered) tables.push({ name: `REGISTERED_BEFORE_${postfix}`, status: "pending", time: 0, parameters: `start: ${regStartDate}, end: ${regEndDate}` });
+    if (enableActive) tables.push({ name: `DAY_ACTIVE_${postfix}`, status: "pending", time: 0, parameters: `range: ${activePeriod}, end: ${activeUntil}` });
+    if (enableInactive) tables.push({ name: `DAY_NOT_ACTIVE_${postfix}`, status: "pending", time: 0, parameters: `range: ${inactivePeriod}, end: ${inactiveUntil}` });
+    if (enableBalance) tables.push({ name: `BALANCE_THRESH_${postfix}`, status: "pending", time: 0, parameters: `threshold: ${balanceLimit} ETB` });
+    if (enableTargeted) tables.push({ name: `TARGETED_${postfix}`, status: "pending", time: 0, parameters: `range: ${targetedLookback}, end: ${targetedAnalysis}` });
+    if (enableRewarded) tables.push({ name: `REWARDED_${postfix}`, status: "pending", time: 0, parameters: `field1: ${rewardedField1}, field2: ${rewardedField2}` });
+    if (enableGsm) tables.push({ name: `GSM_USAGE_${postfix}`, status: "pending", time: 0, parameters: `field1: ${gsmField1}, field2: ${gsmField2}` });
+    if (enableTopUp) tables.push({ name: `MPESA_TOPUP_${postfix}`, status: "pending", time: 0, parameters: `field1: ${topUpField1}, field2: ${topUpField2}` });
+    tables.push({ name: `PIN_RESET_BASE_${postfix}`, status: "pending", time: 0, parameters: "All pre-requisite tables" });
+    return tables;
+  };
+
+  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>(getAllTables());
 
   const handleGenerate = () => {
+    const selectedTables = getAllTables();
+    setTableStatuses(selectedTables);
     setIsGenerating(true);
     setStartTime(Date.now());
     
     toast({
       title: "Starting Generation",
-      description: "Base tables are being generated...",
+      description: `Generating ${selectedTables.length} base tables...`,
     });
 
     // Simulate table generation process
-    simulateTableGeneration();
+    simulateTableGeneration(selectedTables.length);
   };
 
-  const simulateTableGeneration = () => {
+  const simulateTableGeneration = (tableCount: number) => {
     // This would be replaced with actual API calls in production
-    const completionTimes = [12000, 8000, 15000, 12000, 8000, 10000, 5000];
+    const completionTimes = Array(tableCount).fill(0).map(() => Math.floor(Math.random() * 10000) + 5000);
     
     completionTimes.forEach((time, index) => {
       setTimeout(() => {
@@ -136,7 +170,7 @@ export default function BasePreparation() {
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             Base Preparation Dashboard
           </h1>
-          <p className="text-muted-foreground mt-1">Configure and generate base tables for Existing PINRESET</p>
+          <p className="text-muted-foreground mt-1">Configure and generate base tables</p>
         </div>
 
         <div className="space-y-6">
@@ -149,6 +183,23 @@ export default function BasePreparation() {
               <CardDescription>Configure parameters for all base tables</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
+              {/* Base Prep Type Selector */}
+              <div className="mb-6">
+                <Label htmlFor="basePrepType" className="text-base font-semibold">Base Preparation Type</Label>
+                <Select value={basePrepType} onValueChange={setBasePrepType}>
+                  <SelectTrigger className="mt-2 max-w-xs bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="existing-pinreset">Existing PINRESET</SelectItem>
+                    <SelectItem value="ga-pinreset">GA PINRESET</SelectItem>
+                    <SelectItem value="cbe-bank">CBE BANK</SelectItem>
+                    <SelectItem value="winback-churner">Winback Churner</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Select the type of base preparation</p>
+              </div>
+
               {/* Postfix Input */}
               <div className="mb-6">
                 <Label htmlFor="postfix" className="text-base font-semibold">Table Postfix</Label>
@@ -166,19 +217,25 @@ export default function BasePreparation() {
                   {/* VLR Attachment Card */}
                   <Card className="border-l-4 border-l-blue-500">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Link className="h-4 w-4" />
-                        VLR ATTACHMENT
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <Link className="h-4 w-4" />
+                          VLR ATTACHMENT
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableVlr} onCheckedChange={(checked) => setEnableVlr(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label>Start Day</Label>
-                        <Input type="number" value={vlrStartDay} onChange={(e) => setVlrStartDay(e.target.value)} />
+                        <Input type="number" value={vlrStartDay} onChange={(e) => setVlrStartDay(e.target.value)} disabled={!enableVlr} />
                       </div>
                       <div>
                         <Label>End Day</Label>
-                        <Input type="number" value={vlrEndDay} onChange={(e) => setVlrEndDay(e.target.value)} />
+                        <Input type="number" value={vlrEndDay} onChange={(e) => setVlrEndDay(e.target.value)} disabled={!enableVlr} />
                       </div>
                     </CardContent>
                   </Card>
@@ -186,19 +243,25 @@ export default function BasePreparation() {
                   {/* Registered Before Card */}
                   <Card className="border-l-4 border-l-purple-500">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Calendar className="h-4 w-4" />
-                        REGISTERED BEFORE
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          REGISTERED BEFORE
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableRegistered} onCheckedChange={(checked) => setEnableRegistered(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label>Start Date</Label>
-                        <Input type="date" value={regStartDate} onChange={(e) => setRegStartDate(e.target.value)} />
+                        <Input type="date" value={regStartDate} onChange={(e) => setRegStartDate(e.target.value)} disabled={!enableRegistered} />
                       </div>
                       <div>
                         <Label>End Date</Label>
-                        <Input type="date" value={regEndDate} onChange={(e) => setRegEndDate(e.target.value)} />
+                        <Input type="date" value={regEndDate} onChange={(e) => setRegEndDate(e.target.value)} disabled={!enableRegistered} />
                       </div>
                     </CardContent>
                   </Card>
@@ -206,19 +269,25 @@ export default function BasePreparation() {
                   {/* Active Users Card */}
                   <Card className="border-l-4 border-l-green-500">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Users className="h-4 w-4" />
-                        ACTIVE USERS
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          ACTIVE USERS
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableActive} onCheckedChange={(checked) => setEnableActive(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label>Period</Label>
-                        <Select value={activePeriod} onValueChange={setActivePeriod}>
-                          <SelectTrigger>
+                        <Select value={activePeriod} onValueChange={setActivePeriod} disabled={!enableActive}>
+                          <SelectTrigger className="bg-background">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-background z-50">
                             <SelectItem value="30">30 days</SelectItem>
                             <SelectItem value="60">60 days</SelectItem>
                             <SelectItem value="90">90 days</SelectItem>
@@ -227,7 +296,7 @@ export default function BasePreparation() {
                       </div>
                       <div>
                         <Label>Until</Label>
-                        <Input type="date" value={activeUntil} onChange={(e) => setActiveUntil(e.target.value)} />
+                        <Input type="date" value={activeUntil} onChange={(e) => setActiveUntil(e.target.value)} disabled={!enableActive} />
                       </div>
                     </CardContent>
                   </Card>
@@ -235,19 +304,25 @@ export default function BasePreparation() {
                   {/* Inactive Users Card */}
                   <Card className="border-l-4 border-l-orange-500">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Clock className="h-4 w-4" />
-                        INACTIVE USERS
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          INACTIVE USERS
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableInactive} onCheckedChange={(checked) => setEnableInactive(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label>Period</Label>
-                        <Select value={inactivePeriod} onValueChange={setInactivePeriod}>
-                          <SelectTrigger>
+                        <Select value={inactivePeriod} onValueChange={setInactivePeriod} disabled={!enableInactive}>
+                          <SelectTrigger className="bg-background">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-background z-50">
                             <SelectItem value="15">15 days</SelectItem>
                             <SelectItem value="30">30 days</SelectItem>
                             <SelectItem value="60">60 days</SelectItem>
@@ -256,7 +331,7 @@ export default function BasePreparation() {
                       </div>
                       <div>
                         <Label>Until</Label>
-                        <Input type="date" value={inactiveUntil} onChange={(e) => setInactiveUntil(e.target.value)} />
+                        <Input type="date" value={inactiveUntil} onChange={(e) => setInactiveUntil(e.target.value)} disabled={!enableInactive} />
                       </div>
                     </CardContent>
                   </Card>
@@ -264,15 +339,21 @@ export default function BasePreparation() {
                   {/* Balance Threshold Card */}
                   <Card className="border-l-4 border-l-yellow-500">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <DollarSign className="h-4 w-4" />
-                        BALANCE THRESHOLD
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4" />
+                          BALANCE THRESHOLD
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableBalance} onCheckedChange={(checked) => setEnableBalance(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label>Limit (ETB)</Label>
-                        <Input type="number" step="0.01" value={balanceLimit} onChange={(e) => setBalanceLimit(e.target.value)} />
+                        <Input type="number" step="0.01" value={balanceLimit} onChange={(e) => setBalanceLimit(e.target.value)} disabled={!enableBalance} />
                       </div>
                     </CardContent>
                   </Card>
@@ -280,19 +361,25 @@ export default function BasePreparation() {
                   {/* Targeted Users Card */}
                   <Card className="border-l-4 border-l-red-500">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Target className="h-4 w-4" />
-                        TARGETED USERS
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          TARGETED USERS
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableTargeted} onCheckedChange={(checked) => setEnableTargeted(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label>Lookback</Label>
-                        <Select value={targetedLookback} onValueChange={setTargetedLookback}>
-                          <SelectTrigger>
+                        <Select value={targetedLookback} onValueChange={setTargetedLookback} disabled={!enableTargeted}>
+                          <SelectTrigger className="bg-background">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-background z-50">
                             <SelectItem value="30">30 days</SelectItem>
                             <SelectItem value="60">60 days</SelectItem>
                             <SelectItem value="90">90 days</SelectItem>
@@ -301,7 +388,85 @@ export default function BasePreparation() {
                       </div>
                       <div>
                         <Label>Analysis Date</Label>
-                        <Input type="date" value={targetedAnalysis} onChange={(e) => setTargetedAnalysis(e.target.value)} />
+                        <Input type="date" value={targetedAnalysis} onChange={(e) => setTargetedAnalysis(e.target.value)} disabled={!enableTargeted} />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Rewarded Card */}
+                  <Card className="border-l-4 border-l-pink-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <Gift className="h-4 w-4" />
+                          REWARDED
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableRewarded} onCheckedChange={(checked) => setEnableRewarded(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Field 1</Label>
+                        <Input type="text" value={rewardedField1} onChange={(e) => setRewardedField1(e.target.value)} disabled={!enableRewarded} placeholder="Enter field 1" />
+                      </div>
+                      <div>
+                        <Label>Field 2</Label>
+                        <Input type="text" value={rewardedField2} onChange={(e) => setRewardedField2(e.target.value)} disabled={!enableRewarded} placeholder="Enter field 2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* GSM Usage Card */}
+                  <Card className="border-l-4 border-l-cyan-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <Smartphone className="h-4 w-4" />
+                          GSM USAGE
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableGsm} onCheckedChange={(checked) => setEnableGsm(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Field 1</Label>
+                        <Input type="text" value={gsmField1} onChange={(e) => setGsmField1(e.target.value)} disabled={!enableGsm} placeholder="Enter field 1" />
+                      </div>
+                      <div>
+                        <Label>Field 2</Label>
+                        <Input type="text" value={gsmField2} onChange={(e) => setGsmField2(e.target.value)} disabled={!enableGsm} placeholder="Enter field 2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* MPESA Top Up Card */}
+                  <Card className="border-l-4 border-l-indigo-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4" />
+                          MPESA TOP UP
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={enableTopUp} onCheckedChange={(checked) => setEnableTopUp(checked as boolean)} />
+                          <Label className="text-xs">Enable</Label>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Field 1</Label>
+                        <Input type="text" value={topUpField1} onChange={(e) => setTopUpField1(e.target.value)} disabled={!enableTopUp} placeholder="Enter field 1" />
+                      </div>
+                      <div>
+                        <Label>Field 2</Label>
+                        <Input type="text" value={topUpField2} onChange={(e) => setTopUpField2(e.target.value)} disabled={!enableTopUp} placeholder="Enter field 2" />
                       </div>
                     </CardContent>
                   </Card>

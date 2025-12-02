@@ -21,7 +21,7 @@ const App = () => (
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="metric/:metricId" element={<MetricDetail />} />
-            <Route path="base-prep/:module" element={<BasePreparation />} />
+            <Route path="base-preparation" element={<BasePreparation />} />
             <Route path="campaign-management" element={<Dashboard />} />
             <Route path="ops-support" element={<Dashboard />} />
           </Route>

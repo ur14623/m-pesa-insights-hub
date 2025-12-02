@@ -198,44 +198,46 @@ export default function BasePreparation() {
               </CardTitle>
               <CardDescription>Select tables and configure parameters</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              <div>
-                <Label htmlFor="postfix" className="text-base font-semibold">Table Postfix</Label>
-                <Input 
-                  id="postfix"
-                  type="text" 
-                  value={postfix} 
-                  onChange={(e) => setPostfix(e.target.value.toUpperCase())} 
-                  placeholder="e.g., NOV29"
-                  className="mt-2 max-w-xs"
-                />
-                <p className="text-xs text-muted-foreground mt-1">This postfix will be appended to all generated table names</p>
-              </div>
-
-              <div>
-                <Label className="text-base font-semibold">Add Tables</Label>
-                <div className="flex gap-2 mt-2">
-                  <Select value={selectedTableId} onValueChange={setSelectedTableId}>
-                    <SelectTrigger className="flex-1 max-w-md bg-background">
-                      <SelectValue placeholder="Select a table to add..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {availableToSelect.map(table => (
-                        <SelectItem key={table.id} value={table.id}>
-                          {table.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={handleAddTable} disabled={!selectedTableId}>
-                    Add Table
-                  </Button>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="postfix" className="text-base font-semibold">Table Postfix</Label>
+                  <Input 
+                    id="postfix"
+                    type="text" 
+                    value={postfix} 
+                    onChange={(e) => setPostfix(e.target.value.toUpperCase())} 
+                    placeholder="e.g., NOV29"
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Appended to all table names</p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {selectedTables.length === 0 
-                    ? "No tables selected. Add tables from the dropdown above."
-                    : `${selectedTables.length} table(s) selected`}
-                </p>
+
+                <div>
+                  <Label className="text-base font-semibold">Add Tables</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Select value={selectedTableId} onValueChange={setSelectedTableId}>
+                      <SelectTrigger className="flex-1 bg-background">
+                        <SelectValue placeholder="Select a table to add..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {availableToSelect.map(table => (
+                          <SelectItem key={table.id} value={table.id}>
+                            {table.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={handleAddTable} disabled={!selectedTableId}>
+                      Add
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {selectedTables.length === 0 
+                      ? "No tables selected"
+                      : `${selectedTables.length} table(s) selected`}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

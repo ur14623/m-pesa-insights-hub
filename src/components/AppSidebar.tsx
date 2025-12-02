@@ -72,38 +72,46 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Metrics - Collapsible */}
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 ${!open ? "justify-center" : ""}`}>
-                      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
-                      <TrendingUp className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
-                      {open && <span className="text-sm transition-colors">Metrics</span>}
-                      {open && <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {metrics.map((metric, idx) => (
-                        <SidebarMenuSubItem key={metric.title} className="animate-fade-in" style={{ animationDelay: `${idx * 20}ms` }}>
-                          <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
-                            <NavLink
-                              to={metric.url}
-                              end
-                              className="relative z-10"
-                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            >
-                              <metric.icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                              {open && <span className="text-xs">{metric.title}</span>}
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
+              {/* Metrics - Collapsible (only when sidebar is open) */}
+              {open ? (
+                <Collapsible defaultOpen className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">
+                        <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
+                        <TrendingUp className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
+                        <span className="text-sm transition-colors">Metrics</span>
+                        <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {metrics.map((metric, idx) => (
+                          <SidebarMenuSubItem key={metric.title} className="animate-fade-in" style={{ animationDelay: `${idx * 20}ms` }}>
+                            <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
+                              <NavLink
+                                to={metric.url}
+                                end
+                                className="relative z-10"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              >
+                                <metric.icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+                                <span className="text-xs">{metric.title}</span>
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              ) : (
+                <SidebarMenuItem className="animate-fade-in">
+                  <SidebarMenuButton className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 justify-center">
+                    <TrendingUp className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
-              </Collapsible>
+              )}
 
               {/* Base Preparation */}
               <SidebarMenuItem className="animate-fade-in">
@@ -137,47 +145,55 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Ops Support - Collapsible */}
-              <Collapsible className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 ${!open ? "justify-center" : ""}`}>
-                      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
-                      <Headphones className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
-                      {open && <span className="text-sm transition-colors">Ops Support</span>}
-                      {open && <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem className="animate-fade-in">
-                        <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
-                          <NavLink to="/ops-support/court-issue" className="relative z-10" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
-                            <Gavel className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                            {open && <span className="text-xs">Court Issue</span>}
-                          </NavLink>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem className="animate-fade-in">
-                        <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
-                          <NavLink to="/ops-support/dormant-list" className="relative z-10" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
-                            <Moon className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                            {open && <span className="text-xs">Dormant List</span>}
-                          </NavLink>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem className="animate-fade-in">
-                        <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
-                          <NavLink to="/ops-support/pinlock" className="relative z-10" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
-                            <Lock className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                            {open && <span className="text-xs">Pinlock</span>}
-                          </NavLink>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
+              {/* Ops Support - Collapsible (only when sidebar is open) */}
+              {open ? (
+                <Collapsible className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300">
+                        <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
+                        <Headphones className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
+                        <span className="text-sm transition-colors">Ops Support</span>
+                        <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem className="animate-fade-in">
+                          <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
+                            <NavLink to="/ops-support/court-issue" className="relative z-10" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
+                              <Gavel className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+                              <span className="text-xs">Court Issue</span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem className="animate-fade-in">
+                          <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
+                            <NavLink to="/ops-support/dormant-list" className="relative z-10" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
+                              <Moon className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+                              <span className="text-xs">Dormant List</span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem className="animate-fade-in">
+                          <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
+                            <NavLink to="/ops-support/pinlock" className="relative z-10" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
+                              <Lock className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+                              <span className="text-xs">Pinlock</span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              ) : (
+                <SidebarMenuItem className="animate-fade-in">
+                  <SidebarMenuButton className="group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 justify-center">
+                    <Headphones className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
-              </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

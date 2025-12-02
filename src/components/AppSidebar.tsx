@@ -32,12 +32,6 @@ const metrics = [
   { title: "Top Up", url: "/metric/top-up", icon: ArrowUpCircle },
 ];
 
-const basePreparation = [
-  { title: "Existing Pin Reset", url: "/base-prep/existing-pinreset" },
-  { title: "GA Pin Reset", url: "/base-prep/ga-pinreset" },
-  { title: "CBE", url: "/base-prep/cbe" },
-  { title: "Winback Churner", url: "/base-prep/winback-churner" },
-];
 
 export function AppSidebar() {
   const { open } = useSidebar();
@@ -111,37 +105,21 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              {/* Base Preparation - Collapsible */}
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 ${!open ? "justify-center" : ""}`}>
-                      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
-                      <Database className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
-                      {open && <span className="text-sm transition-colors">Base Preparation</span>}
-                      {open && <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {basePreparation.map((item, idx) => (
-                        <SidebarMenuSubItem key={item.title} className="animate-fade-in" style={{ animationDelay: `${idx * 20}ms` }}>
-                          <SidebarMenuSubButton asChild className="group relative overflow-hidden hover:bg-sidebar-accent/80 transition-all duration-300">
-                            <NavLink
-                              to={item.url}
-                              end
-                              className="relative z-10"
-                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            >
-                              {open && <span className="text-xs">{item.title}</span>}
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {/* Base Preparation */}
+              <SidebarMenuItem className="animate-fade-in">
+                <SidebarMenuButton asChild className={`group relative overflow-hidden rounded-lg hover:bg-sidebar-accent/80 transition-all duration-300 ${!open ? "justify-center" : ""}`}>
+                  <NavLink 
+                    to="/base-preparation" 
+                    end
+                    className="relative z-10"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-2 border-sidebar-primary"
+                  >
+                    <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity" />
+                    <Database className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-sidebar-primary" />
+                    {open && <span className="text-sm transition-colors">Base Preparation</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               {/* Campaign Management */}
               <SidebarMenuItem className="animate-fade-in">

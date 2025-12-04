@@ -5,10 +5,19 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Moon, Upload, CalendarIcon, Table, Users, TrendingUp, BarChart3 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Moon, CalendarIcon, Table, Users, TrendingUp, BarChart3, Loader2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+
+type TableStatus = "idle" | "creating" | "completed";
+
+interface TableProgress {
+  stillOnDormant: { status: TableStatus; progress: number };
+  backToActive: { status: TableStatus; progress: number };
+  performance: { status: TableStatus; progress: number };
+}
 
 export default function DormantList() {
   const { toast } = useToast();
@@ -16,11 +25,41 @@ export default function DormantList() {
   const [file, setFile] = useState<File | null>(null);
   const [fromDate, setFromDate] = useState<Date>();
   const [toDate, setToDate] = useState<Date>();
+  const [tableProgress, setTableProgress] = useState<TableProgress>({
+    stillOnDormant: { status: "idle", progress: 0 },
+    backToActive: { status: "idle", progress: 0 },
+    performance: { status: "idle", progress: 0 },
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
     }
+  };
+
+  const simulateProgress = (tableKey: keyof TableProgress) => {
+    setTableProgress(prev => ({
+      ...prev,
+      [tableKey]: { status: "creating", progress: 0 }
+    }));
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15 + 5;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        setTableProgress(prev => ({
+          ...prev,
+          [tableKey]: { status: "completed", progress: 100 }
+        }));
+      } else {
+        setTableProgress(prev => ({
+          ...prev,
+          [tableKey]: { status: "creating", progress }
+        }));
+      }
+    }, 500);
   };
 
   const handleCreateActiveCustomerTable = () => {
@@ -36,6 +75,7 @@ export default function DormantList() {
       toast({ title: "Error", description: "Please enter table name postfix", variant: "destructive" });
       return;
     }
+    simulateProgress("stillOnDormant");
     toast({ title: "Creating Still on Dormant Table", description: `Table: dormant_still_${tablePostfix}` });
   };
 
@@ -44,6 +84,7 @@ export default function DormantList() {
       toast({ title: "Error", description: "Please enter table name postfix", variant: "destructive" });
       return;
     }
+    simulateProgress("backToActive");
     toast({ title: "Creating Back to Active Table", description: `Table: back_to_active_${tablePostfix}` });
   };
 
@@ -52,7 +93,59 @@ export default function DormantList() {
       toast({ title: "Error", description: "Please enter table name postfix", variant: "destructive" });
       return;
     }
+    simulateProgress("performance");
     toast({ title: "Creating Performance Table", description: `Table: performance_${tablePostfix}` });
+  };
+
+  const renderTableCard = (
+    title: string,
+    tableKey: keyof TableProgress,
+    icon: React.ReactNode,
+    onClick: () => void
+  ) => {
+    const { status, progress } = tableProgress[tableKey];
+    const isCreating = status === "creating";
+    const isCompleted = status === "completed";
+
+    return (
+      <Card className="border shadow-sm">
+        <CardContent className="pt-4 pb-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {icon}
+              <span className="font-medium text-sm">{title}</span>
+            </div>
+            {isCompleted && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+          </div>
+          
+          {(isCreating || isCompleted) && (
+            <div className="space-y-1">
+              <Progress value={progress} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {isCreating ? `Creating... ${Math.round(progress)}%` : "Completed"}
+              </p>
+            </div>
+          )}
+          
+          <Button 
+            onClick={onClick} 
+            variant="secondary" 
+            size="sm"
+            className="w-full gap-2"
+            disabled={isCreating}
+          >
+            {isCreating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>Create Table</>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -87,19 +180,12 @@ export default function DormantList() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fileInput">File Input</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="fileInput"
-                    type="file"
-                    onChange={handleFileChange}
-                    className="cursor-pointer"
-                  />
-                  {file && (
-                    <span className="text-sm text-muted-foreground truncate max-w-[150px]">
-                      {file.name}
-                    </span>
-                  )}
-                </div>
+                <Input
+                  id="fileInput"
+                  type="file"
+                  onChange={handleFileChange}
+                  className="cursor-pointer"
+                />
               </div>
             </div>
           </CardContent>
@@ -186,19 +272,25 @@ export default function DormantList() {
             <CardDescription>Create analysis tables based on dormant data</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="flex flex-wrap gap-4">
-              <Button onClick={handleCreateStillOnDormantTable} variant="secondary" className="gap-2">
-                <Moon className="h-4 w-4" />
-                Create Still on Dormant Table
-              </Button>
-              <Button onClick={handleCreateBackToActiveTable} variant="secondary" className="gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Create Back to Active Table
-              </Button>
-              <Button onClick={handleCreatePerformanceTable} variant="secondary" className="gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Create Performance Table
-              </Button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {renderTableCard(
+                "Still on Dormant Table",
+                "stillOnDormant",
+                <Moon className="h-4 w-4 text-muted-foreground" />,
+                handleCreateStillOnDormantTable
+              )}
+              {renderTableCard(
+                "Back to Active Table",
+                "backToActive",
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />,
+                handleCreateBackToActiveTable
+              )}
+              {renderTableCard(
+                "Performance Table",
+                "performance",
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />,
+                handleCreatePerformanceTable
+              )}
             </div>
           </CardContent>
         </Card>

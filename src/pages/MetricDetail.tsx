@@ -1,52 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Download, Calendar as CalendarIcon } from "lucide-react";
+import { Download, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
-const generateMockData = (period: string, startDate?: Date, endDate?: Date, frequency?: string) => {
-  if (period === "custom" && startDate && endDate && frequency) {
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (frequency === "daily") {
-      return Array.from({ length: diffDays + 1 }, (_, i) => ({
-        date: new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000).toLocaleDateString(),
-        value: Math.floor(Math.random() * 5000) + 10000,
-      }));
-    } else {
-      // Monthly aggregation
-      const months = Math.max(1, Math.ceil(diffDays / 30));
-      return Array.from({ length: months }, (_, i) => ({
-        date: `Month ${i + 1}`,
-        value: Math.floor(Math.random() * 150000) + 300000,
-      }));
-    }
-  } else if (period === "daily") {
-    return Array.from({ length: 7 }, (_, i) => ({
-      date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      value: Math.floor(Math.random() * 5000) + 10000,
-    }));
-  } else if (period === "30-day") {
-    return Array.from({ length: 30 }, (_, i) => ({
-      date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      value: Math.floor(Math.random() * 5000) + 10000,
-    }));
-  } else {
-    return Array.from({ length: 3 }, (_, i) => ({
-      date: `Month ${i + 1}`,
-      value: Math.floor(Math.random() * 150000) + 300000,
-    }));
-  }
-};
+const API_BASE_URL = "http://localhost:5000";
 
 const metricTitles: Record<string, string> = {
   "active-total": "Active Total",
@@ -63,27 +30,146 @@ const metricTitles: Record<string, string> = {
   "top-up": "Top Up",
 };
 
+interface CardViewData {
+  daily_count: number;
+  "30day_count": number;
+  "90day_count": number;
+  data_retrieved_at: string;
+}
+
+interface ChartDataItem {
+  date: string;
+  value: number;
+}
+
 export default function MetricDetail() {
   const { metricId } = useParams();
+  const { toast } = useToast();
   const [chartPeriod, setChartPeriod] = useState("30-day");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [frequency, setFrequency] = useState<string>("daily");
 
+  // Data states
+  const [cardData, setCardData] = useState<CardViewData | null>(null);
+  const [chartData, setChartData] = useState<ChartDataItem[]>([]);
+  const [loadingCards, setLoadingCards] = useState(false);
+  const [loadingChart, setLoadingChart] = useState(false);
+
   const metricTitle = metricTitles[metricId || ""] || "Metric";
+  const isActiveTotal = metricId === "active-total";
 
-  // Static card data
-  const dailyData = generateMockData("daily");
-  const thirtyDayData = generateMockData("30-day");
-  const ninetyDayData = generateMockData("90-day");
+  // Fetch card view data
+  useEffect(() => {
+    if (!isActiveTotal) return;
 
-  const dailyValue = dailyData[dailyData.length - 1]?.value || 0;
-  const thirtyDayValue = thirtyDayData.reduce((acc, d) => acc + d.value, 0);
-  const ninetyDayValue = ninetyDayData.reduce((acc, d) => acc + d.value, 0);
+    const fetchCardData = async () => {
+      setLoadingCards(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/active-users/card-view`);
+        if (!response.ok) throw new Error("Failed to fetch card data");
+        const data: CardViewData = await response.json();
+        setCardData(data);
+      } catch (error) {
+        console.error("Error fetching card data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch card data from server",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingCards(false);
+      }
+    };
 
-  // Dynamic chart/table data
-  const chartData = generateMockData(chartPeriod, startDate, endDate, frequency);
-  const mean = chartPeriod === "30-day" ? chartData.reduce((acc, d) => acc + d.value, 0) / chartData.length : null;
+    fetchCardData();
+  }, [isActiveTotal, toast]);
+
+  // Fetch chart/table data
+  useEffect(() => {
+    if (!isActiveTotal) return;
+
+    const fetchChartData = async () => {
+      setLoadingChart(true);
+      try {
+        let url = `${API_BASE_URL}/api/active-users/chart-view`;
+        const params = new URLSearchParams();
+
+        if (chartPeriod === "daily") {
+          params.append("period", "daily");
+        } else if (chartPeriod === "30-day") {
+          params.append("period", "30day");
+        } else if (chartPeriod === "90-day") {
+          params.append("period", "90day");
+        } else if (chartPeriod === "custom" && startDate && endDate) {
+          params.append("period", "custom");
+          params.append("start_date", format(startDate, "yyyy-MM-dd"));
+          params.append("end_date", format(endDate, "yyyy-MM-dd"));
+          params.append("frequency", frequency);
+        } else {
+          setLoadingChart(false);
+          return;
+        }
+
+        url += `?${params.toString()}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to fetch chart data");
+        
+        const data = await response.json();
+        
+        // Handle both array and object response formats
+        if (Array.isArray(data)) {
+          setChartData(data);
+        } else if (data.results && Array.isArray(data.results)) {
+          setChartData(data.results);
+        } else {
+          setChartData([]);
+        }
+      } catch (error) {
+        console.error("Error fetching chart data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch chart data from server",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingChart(false);
+      }
+    };
+
+    fetchChartData();
+  }, [isActiveTotal, chartPeriod, startDate, endDate, frequency, toast]);
+
+  // Fallback mock data for non-active-total metrics
+  const generateMockData = (period: string) => {
+    if (period === "daily") {
+      return Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        value: Math.floor(Math.random() * 5000) + 10000,
+      }));
+    } else if (period === "30-day") {
+      return Array.from({ length: 30 }, (_, i) => ({
+        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        value: Math.floor(Math.random() * 5000) + 10000,
+      }));
+    } else {
+      return Array.from({ length: 3 }, (_, i) => ({
+        date: `Month ${i + 1}`,
+        value: Math.floor(Math.random() * 150000) + 300000,
+      }));
+    }
+  };
+
+  // Card values
+  const dailyValue = isActiveTotal && cardData ? cardData.daily_count : 0;
+  const thirtyDayValue = isActiveTotal && cardData ? cardData["30day_count"] : 0;
+  const ninetyDayValue = isActiveTotal && cardData ? cardData["90day_count"] : 0;
+
+  // Chart data (use API data for active-total, mock for others)
+  const displayChartData = isActiveTotal ? chartData : generateMockData(chartPeriod);
+  const mean = chartPeriod === "30-day" && displayChartData.length > 0 
+    ? displayChartData.reduce((acc, d) => acc + d.value, 0) / displayChartData.length 
+    : null;
 
   return (
     <div className="space-y-6">
@@ -99,8 +185,14 @@ export default function MetricDetail() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Daily</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-primary">{dailyValue.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Today's value</p>
+            {loadingCards ? (
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-primary">{dailyValue.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">Today's value</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -109,8 +201,14 @@ export default function MetricDetail() {
             <CardTitle className="text-sm font-medium text-muted-foreground">30-Day</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-primary">{thirtyDayValue.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Sum of last 30 days</p>
+            {loadingCards ? (
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-primary">{thirtyDayValue.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">Sum of last 30 days</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -119,8 +217,14 @@ export default function MetricDetail() {
             <CardTitle className="text-sm font-medium text-muted-foreground">90-Day</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-primary">{ninetyDayValue.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Sum of last 90 days</p>
+            {loadingCards ? (
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-primary">{ninetyDayValue.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">Sum of last 90 days</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -229,16 +333,22 @@ export default function MetricDetail() {
                   <Download className="h-4 w-4" />
                 </Button>
               </div>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  {mean && <ReferenceLine y={mean} stroke="hsl(var(--accent))" strokeDasharray="3 3" label="Mean" />}
-                  <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {loadingChart ? (
+                <div className="flex items-center justify-center h-[400px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={displayChartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    {mean && <ReferenceLine y={mean} stroke="hsl(var(--accent))" strokeDasharray="3 3" label="Mean" />}
+                    <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </TabsContent>
 
             <TabsContent value="table" className="space-y-4">
@@ -247,26 +357,32 @@ export default function MetricDetail() {
                   <Download className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="border rounded-lg overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      {chartData.map((row, idx) => (
-                        <TableHead key={idx} className="text-right">{row.date}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">Metric Value</TableCell>
-                      {chartData.map((row, idx) => (
-                        <TableCell key={idx} className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
+              {loadingChart ? (
+                <div className="flex items-center justify-center h-[200px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        {displayChartData.map((row, idx) => (
+                          <TableHead key={idx} className="text-right">{row.date}</TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">Metric Value</TableCell>
+                        {displayChartData.map((row, idx) => (
+                          <TableCell key={idx} className="text-right font-medium">{row.value.toLocaleString()}</TableCell>
+                        ))}
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

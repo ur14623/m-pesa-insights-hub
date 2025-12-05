@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Download, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { Download, Calendar as CalendarIcon, Loader2, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
@@ -55,90 +55,96 @@ export default function MetricDetail() {
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [loadingCards, setLoadingCards] = useState(false);
   const [loadingChart, setLoadingChart] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const metricTitle = metricTitles[metricId || ""] || "Metric";
   const isActiveTotal = metricId === "active-total";
 
   // Fetch card view data
-  useEffect(() => {
+  const fetchCardData = useCallback(async () => {
     if (!isActiveTotal) return;
-
-    const fetchCardData = async () => {
-      setLoadingCards(true);
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/active-users/card-view`);
-        if (!response.ok) throw new Error("Failed to fetch card data");
-        const data: CardViewData = await response.json();
-        setCardData(data);
-      } catch (error) {
-        console.error("Error fetching card data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch card data from server",
-          variant: "destructive",
-        });
-      } finally {
-        setLoadingCards(false);
-      }
-    };
-
-    fetchCardData();
+    setLoadingCards(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/active-users/card-view`);
+      if (!response.ok) throw new Error("Failed to fetch card data");
+      const data: CardViewData = await response.json();
+      setCardData(data);
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error("Error fetching card data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch card data from server",
+        variant: "destructive",
+      });
+      setLoadingCards(false);
+    }
   }, [isActiveTotal, toast]);
 
   // Fetch chart/table data
-  useEffect(() => {
+  const fetchChartData = useCallback(async () => {
     if (!isActiveTotal) return;
+    setLoadingChart(true);
+    try {
+      let url = `${API_BASE_URL}/api/active-users/chart-view`;
+      const params = new URLSearchParams();
 
-    const fetchChartData = async () => {
-      setLoadingChart(true);
-      try {
-        let url = `${API_BASE_URL}/api/active-users/chart-view`;
-        const params = new URLSearchParams();
-
-        if (chartPeriod === "daily") {
-          params.append("period", "daily");
-        } else if (chartPeriod === "30-day") {
-          params.append("period", "30day");
-        } else if (chartPeriod === "90-day") {
-          params.append("period", "90day");
-        } else if (chartPeriod === "custom" && startDate && endDate) {
-          params.append("period", "custom");
-          params.append("start_date", format(startDate, "yyyy-MM-dd"));
-          params.append("end_date", format(endDate, "yyyy-MM-dd"));
-          params.append("frequency", frequency);
-        } else {
-          setLoadingChart(false);
-          return;
-        }
-
-        url += `?${params.toString()}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch chart data");
-        
-        const data = await response.json();
-        
-        // Handle both array and object response formats
-        if (Array.isArray(data)) {
-          setChartData(data);
-        } else if (data.results && Array.isArray(data.results)) {
-          setChartData(data.results);
-        } else {
-          setChartData([]);
-        }
-      } catch (error) {
-        console.error("Error fetching chart data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch chart data from server",
-          variant: "destructive",
-        });
-      } finally {
+      if (chartPeriod === "daily") {
+        params.append("period", "daily");
+      } else if (chartPeriod === "30-day") {
+        params.append("period", "30day");
+      } else if (chartPeriod === "90-day") {
+        params.append("period", "90day");
+      } else if (chartPeriod === "custom" && startDate && endDate) {
+        params.append("period", "custom");
+        params.append("start_date", format(startDate, "yyyy-MM-dd"));
+        params.append("end_date", format(endDate, "yyyy-MM-dd"));
+        params.append("frequency", frequency);
+      } else {
         setLoadingChart(false);
+        return;
       }
-    };
 
-    fetchChartData();
+      url += `?${params.toString()}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch chart data");
+      
+      const data = await response.json();
+      
+      // Handle both array and object response formats
+      if (Array.isArray(data)) {
+        setChartData(data);
+      } else if (data.results && Array.isArray(data.results)) {
+        setChartData(data.results);
+      } else {
+        setChartData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching chart data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch chart data from server",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingChart(false);
+    }
   }, [isActiveTotal, chartPeriod, startDate, endDate, frequency, toast]);
+
+  // Refresh all data
+  const handleRefresh = useCallback(() => {
+    fetchCardData();
+    fetchChartData();
+  }, [fetchCardData, fetchChartData]);
+
+  // Initial load and on period change
+  useEffect(() => {
+    fetchCardData();
+  }, [fetchCardData]);
+
+  useEffect(() => {
+    fetchChartData();
+  }, [fetchChartData]);
 
   // Fallback mock data for non-active-total metrics
   const generateMockData = (period: string) => {
@@ -173,9 +179,29 @@ export default function MetricDetail() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground">{metricTitle}</h2>
-        <p className="text-muted-foreground mt-1">Detailed analysis and trends</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">{metricTitle}</h2>
+          <p className="text-muted-foreground mt-1">Detailed analysis and trends</p>
+        </div>
+        {isActiveTotal && (
+          <div className="flex items-center gap-3">
+            {lastRefresh && (
+              <span className="text-sm text-muted-foreground">
+                Last Refresh: {format(lastRefresh, "PPpp")}
+              </span>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={loadingCards || loadingChart}
+            >
+              <RefreshCw className={cn("h-4 w-4 mr-2", (loadingCards || loadingChart) && "animate-spin")} />
+              Refresh
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Top Section - Three Cards */}

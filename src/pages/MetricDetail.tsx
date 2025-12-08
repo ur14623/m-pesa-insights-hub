@@ -86,7 +86,6 @@ export default function MetricDetail() {
     if (!isActiveTotal) return;
     setLoadingChart(true);
     try {
-      let url = `${API_BASE_URL}/api/active-users/chart-view`;
       const params = new URLSearchParams();
 
       if (chartPeriod === "daily") {
@@ -105,17 +104,17 @@ export default function MetricDetail() {
         return;
       }
 
-      url += `?${params.toString()}`;
+      const url = `${API_BASE_URL}/api/active-users/data?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch chart data");
       
       const data = await response.json();
       
-      // Handle both array and object response formats
-      if (Array.isArray(data)) {
-        setChartData(data);
-      } else if (data.results && Array.isArray(data.results)) {
+      // Handle response format: { results: [...], period, frequency, data_retrieved_at }
+      if (data.results && Array.isArray(data.results)) {
         setChartData(data.results);
+      } else if (Array.isArray(data)) {
+        setChartData(data);
       } else {
         setChartData([]);
       }

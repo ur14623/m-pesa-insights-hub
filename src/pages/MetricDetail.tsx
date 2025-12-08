@@ -30,6 +30,18 @@ const metricTitles: Record<string, string> = {
   "top-up": "Top Up",
 };
 
+// API endpoint mapping for each metric
+const metricApiEndpoints: Record<string, { cardView: string; data: string }> = {
+  "active-total": {
+    cardView: "/api/active-users/card-view",
+    data: "/api/active-users/data",
+  },
+  "active-new": {
+    cardView: "/api/new-customers/card-view",
+    data: "/api/new-customers/data",
+  },
+};
+
 interface CardViewData {
   daily_count: number;
   "30day_count": number;
@@ -58,14 +70,15 @@ export default function MetricDetail() {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const metricTitle = metricTitles[metricId || ""] || "Metric";
-  const isActiveTotal = metricId === "active-total";
+  const apiEndpoints = metricId ? metricApiEndpoints[metricId] : null;
+  const hasApiIntegration = !!apiEndpoints;
 
   // Fetch card view data
   const fetchCardData = useCallback(async () => {
-    if (!isActiveTotal) return;
+    if (!apiEndpoints) return;
     setLoadingCards(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/active-users/card-view`);
+      const response = await fetch(`${API_BASE_URL}${apiEndpoints.cardView}`);
       if (!response.ok) throw new Error("Failed to fetch card data");
       const data: CardViewData = await response.json();
       setCardData(data);
@@ -77,13 +90,14 @@ export default function MetricDetail() {
         description: "Failed to fetch card data from server",
         variant: "destructive",
       });
+    } finally {
       setLoadingCards(false);
     }
-  }, [isActiveTotal, toast]);
+  }, [apiEndpoints, toast]);
 
   // Fetch chart/table data
   const fetchChartData = useCallback(async () => {
-    if (!isActiveTotal) return;
+    if (!apiEndpoints) return;
     setLoadingChart(true);
     try {
       const params = new URLSearchParams();
@@ -104,7 +118,7 @@ export default function MetricDetail() {
         return;
       }
 
-      const url = `${API_BASE_URL}/api/active-users/data?${params.toString()}`;
+      const url = `${API_BASE_URL}${apiEndpoints.data}?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch chart data");
       
@@ -128,7 +142,7 @@ export default function MetricDetail() {
     } finally {
       setLoadingChart(false);
     }
-  }, [isActiveTotal, chartPeriod, startDate, endDate, frequency, toast]);
+  }, [apiEndpoints, chartPeriod, startDate, endDate, frequency, toast]);
 
   // Refresh all data
   const handleRefresh = useCallback(() => {
@@ -166,12 +180,12 @@ export default function MetricDetail() {
   };
 
   // Card values
-  const dailyValue = isActiveTotal && cardData ? cardData.daily_count : 0;
-  const thirtyDayValue = isActiveTotal && cardData ? cardData["30day_count"] : 0;
-  const ninetyDayValue = isActiveTotal && cardData ? cardData["90day_count"] : 0;
+  const dailyValue = hasApiIntegration && cardData ? cardData.daily_count : 0;
+  const thirtyDayValue = hasApiIntegration && cardData ? cardData["30day_count"] : 0;
+  const ninetyDayValue = hasApiIntegration && cardData ? cardData["90day_count"] : 0;
 
-  // Chart data (use API data for active-total, mock for others)
-  const displayChartData = isActiveTotal ? chartData : generateMockData(chartPeriod);
+  // Chart data (use API data for integrated metrics, mock for others)
+  const displayChartData = hasApiIntegration ? chartData : generateMockData(chartPeriod);
   const mean = chartPeriod === "30-day" && displayChartData.length > 0 
     ? displayChartData.reduce((acc, d) => acc + d.value, 0) / displayChartData.length 
     : null;
@@ -183,7 +197,7 @@ export default function MetricDetail() {
           <h2 className="text-3xl font-bold text-foreground">{metricTitle}</h2>
           <p className="text-muted-foreground mt-1">Detailed analysis and trends</p>
         </div>
-        {isActiveTotal && (
+        {hasApiIntegration && (
           <div className="flex items-center gap-3">
             {lastRefresh && (
               <span className="text-sm text-muted-foreground">

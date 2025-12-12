@@ -16,38 +16,44 @@ import { useToast } from "@/hooks/use-toast";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const metricTitles: Record<string, string> = {
-  "active-total": "Active Total",
-  "active-new": "Active New",
-  "active-existing": "Active Existing",
-  "active-existing-transacting": "Active Existing Transacting",
-  "active-new-transacting": "Active New Transacting",
-  "active-micro-merchants": "Active Micro Merchants",
-  "active-unified-merchants": "Active Unified Merchants",
-  "active-app-users": "Active App Users",
-  "app-downloads": "App Downloads",
-  "non-gross-adds": "Non-Gross Adds",
-  "gross-adds": "Gross Adds",
-  "top-up": "Top Up",
+  // Daily metrics
+  "daily-active-customers": "Daily Active Customers",
+  "daily-gross-adds": "Daily Gross Adds",
+  "daily-non-gross-adds": "Daily Non-Gross Adds",
+  "daily-app-downloads": "Daily App Downloads",
+  "daily-active-micro-merchants": "Daily Active Micro Merchants",
+  "daily-active-unified-merchants": "Daily Active Unified Merchants",
+  // 30D metrics
+  "30d-active-total": "30D Active Total",
+  "30d-active-new": "30D Active New",
+  "30d-active-existing": "30D Active Existing",
+  "30d-active-transacting-total": "30D Active Transacting Total",
+  "30d-active-new-txn": "30D Active New (txn)",
+  "30d-active-existing-txn": "30D Active Existing (txn)",
+  "30d-active-app-users": "30D Active App Users",
+  "30d-app-transacting": "30D App Transacting",
+  "30d-active-micro-merchants": "30D Active Micro Merchants",
+  "30d-active-unified-merchants": "30D Active Unified Merchants",
+  // 90D metrics
+  "90d-active-total": "90D Active Total",
+  "90d-active-new": "90D Active New",
+  "90d-active-existing": "90D Active Existing",
+  "90d-active-transacting-total": "90D Active Transacting Total",
+  "90d-active-new-txn": "90D Active New (txn)",
+  "90d-active-existing-txn": "90D Active Existing (txn)",
 };
 
-// API endpoint mapping for each metric
+// API endpoint mapping for each metric (add as APIs become available)
 const metricApiEndpoints: Record<string, { cardView: string; data: string }> = {
-  "active-total": {
+  "30d-active-total": {
     cardView: "/api/active-users/card-view",
     data: "/api/active-users/data",
   },
-  "active-new": {
+  "30d-active-new": {
     cardView: "/api/new-customers/card-view",
     data: "/api/new-customers/data",
   },
 };
-
-interface CardViewData {
-  daily_count: number;
-  "30day_count": number;
-  "90day_count": number;
-  data_retrieved_at: string;
-}
 
 interface ChartDataItem {
   date: string;
@@ -63,37 +69,13 @@ export default function MetricDetail() {
   const [frequency, setFrequency] = useState<string>("daily");
 
   // Data states
-  const [cardData, setCardData] = useState<CardViewData | null>(null);
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
-  const [loadingCards, setLoadingCards] = useState(false);
   const [loadingChart, setLoadingChart] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const metricTitle = metricTitles[metricId || ""] || "Metric";
   const apiEndpoints = metricId ? metricApiEndpoints[metricId] : null;
   const hasApiIntegration = !!apiEndpoints;
-
-  // Fetch card view data
-  const fetchCardData = useCallback(async () => {
-    if (!apiEndpoints) return;
-    setLoadingCards(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}${apiEndpoints.cardView}`);
-      if (!response.ok) throw new Error("Failed to fetch card data");
-      const data: CardViewData = await response.json();
-      setCardData(data);
-      setLastRefresh(new Date());
-    } catch (error) {
-      console.error("Error fetching card data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch card data from server",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingCards(false);
-    }
-  }, [apiEndpoints, toast]);
 
   // Fetch chart/table data
   const fetchChartData = useCallback(async () => {
@@ -124,7 +106,6 @@ export default function MetricDetail() {
       
       const data = await response.json();
       
-      // Handle response format: { results: [...], period, frequency, data_retrieved_at }
       if (data.results && Array.isArray(data.results)) {
         setChartData(data.results);
       } else if (Array.isArray(data)) {
@@ -132,6 +113,7 @@ export default function MetricDetail() {
       } else {
         setChartData([]);
       }
+      setLastRefresh(new Date());
     } catch (error) {
       console.error("Error fetching chart data:", error);
       toast({
@@ -144,45 +126,37 @@ export default function MetricDetail() {
     }
   }, [apiEndpoints, chartPeriod, startDate, endDate, frequency, toast]);
 
-  // Refresh all data
+  // Refresh data
   const handleRefresh = useCallback(() => {
-    fetchCardData();
-    fetchChartData();
-  }, [fetchCardData, fetchChartData]);
-
-  // Initial load and on period change
-  useEffect(() => {
-    fetchCardData();
-  }, [fetchCardData]);
-
-  useEffect(() => {
     fetchChartData();
   }, [fetchChartData]);
 
-  // Fallback mock data for non-active-total metrics
+  // Initial load and on period change
+  useEffect(() => {
+    if (hasApiIntegration) {
+      fetchChartData();
+    }
+  }, [fetchChartData, hasApiIntegration]);
+
+  // Fallback mock data for metrics without API
   const generateMockData = (period: string) => {
     if (period === "daily") {
       return Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-        value: Math.floor(Math.random() * 5000) + 10000,
+        date: format(new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000), "MMM dd"),
+        value: Math.floor(Math.random() * 50000) + 200000,
       }));
     } else if (period === "30-day") {
       return Array.from({ length: 30 }, (_, i) => ({
-        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-        value: Math.floor(Math.random() * 5000) + 10000,
+        date: format(new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000), "MMM dd"),
+        value: Math.floor(Math.random() * 50000) + 200000,
       }));
     } else {
       return Array.from({ length: 3 }, (_, i) => ({
         date: `Month ${i + 1}`,
-        value: Math.floor(Math.random() * 150000) + 300000,
+        value: Math.floor(Math.random() * 1500000) + 3000000,
       }));
     }
   };
-
-  // Card values
-  const dailyValue = hasApiIntegration && cardData ? cardData.daily_count : 0;
-  const thirtyDayValue = hasApiIntegration && cardData ? cardData["30day_count"] : 0;
-  const ninetyDayValue = hasApiIntegration && cardData ? cardData["90day_count"] : 0;
 
   // Chart data (use API data for integrated metrics, mock for others)
   const displayChartData = hasApiIntegration ? chartData : generateMockData(chartPeriod);
@@ -194,7 +168,7 @@ export default function MetricDetail() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">{metricTitle}</h2>
+          <h1 className="text-3xl font-bold text-foreground">{metricTitle}</h1>
           <p className="text-muted-foreground mt-1">Detailed analysis and trends</p>
         </div>
         {hasApiIntegration && (
@@ -208,67 +182,16 @@ export default function MetricDetail() {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={loadingCards || loadingChart}
+              disabled={loadingChart}
             >
-              <RefreshCw className={cn("h-4 w-4 mr-2", (loadingCards || loadingChart) && "animate-spin")} />
+              <RefreshCw className={cn("h-4 w-4 mr-2", loadingChart && "animate-spin")} />
               Refresh
             </Button>
           </div>
         )}
       </div>
 
-      {/* Top Section - Three Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Daily</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingCards ? (
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            ) : (
-              <>
-                <p className="text-3xl font-bold text-primary">{dailyValue.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">Today's value</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">30-Day</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingCards ? (
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            ) : (
-              <>
-                <p className="text-3xl font-bold text-primary">{thirtyDayValue.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">Sum of last 30 days</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">90-Day</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingCards ? (
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            ) : (
-              <>
-                <p className="text-3xl font-bold text-primary">{ninetyDayValue.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">Sum of last 90 days</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs - Chart & Table */}
+      {/* Chart & Table Tabs - No Cards */}
       <Card>
         <CardHeader>
           <div className="flex flex-col space-y-4">

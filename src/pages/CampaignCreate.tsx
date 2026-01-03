@@ -11,23 +11,32 @@ import { RewardConfigStep } from "@/components/campaign-create/RewardConfigStep"
 import { ScheduleControlsStep } from "@/components/campaign-create/ScheduleControlsStep";
 import { ReviewSubmitStep } from "@/components/campaign-create/ReviewSubmitStep";
 
+export interface ChannelMessages {
+  sms: Record<string, string>;
+  ussd: Record<string, string>;
+  app: Record<string, string>;
+}
+
+export interface ChannelSettings {
+  sms: { cap: number; retryOnFailure: boolean; priority: number };
+  ussd: { cap: number; retryOnFailure: boolean; priority: number };
+  app: { cap: number; retryOnFailure: boolean; priority: number };
+  email: { cap: number; retryOnFailure: boolean; priority: number };
+}
+
 export interface CampaignFormData {
   // Step 1: Basics
   name: string;
-  type: string;
+  type: string; // "informational" | "incentive"
   objective: string;
   description: string;
   owner: string;
   
   // Step 2: Audience
-  segmentId: string;
-  segmentName: string;
+  selectedSegmentIds: string[];
+  uploadedFileName: string;
+  uploadedFileCustomers: number;
   totalCustomers: number;
-  activePercent: number;
-  dormantPercent: number;
-  highValue: number;
-  mediumValue: number;
-  lowValue: number;
   
   // Step 3: Channels & Messages
   channels: {
@@ -36,22 +45,20 @@ export interface CampaignFormData {
     app: boolean;
     email: boolean;
   };
-  messages: {
-    sms: string;
-    ussd: string;
-    appTitle: string;
-    appBody: string;
-    appDeepLink: string;
-    emailSubject: string;
-    emailBody: string;
+  channelMessages: ChannelMessages;
+  emailContent: {
+    language: string;
+    subject: string;
+    body: string;
   };
+  channelSettings: ChannelSettings;
   
-  // Step 4: Rewards
-  enableReward: boolean;
-  rewardType: string;
+  // Step 4: Rewards (only for incentive type)
+  rewardType: string; // "cashback" | "bonus" | "other"
+  rewardTypeOther: string;
   rewardValue: number;
-  perCustomerLimit: number;
-  campaignCap: number;
+  rewardCapPerDay: number;
+  rewardCapPerCustomer: number;
   rewardAccountId: string;
   rewardAccountName: string;
   rewardAccountBalance: number;
@@ -59,13 +66,8 @@ export interface CampaignFormData {
   // Step 5: Schedule
   scheduleType: string;
   startDate: string;
-  startTime: string;
   endDate: string;
-  triggerType: string;
-  triggerDays: number;
   frequencyCap: string;
-  channelPriority: string;
-  retryOnFailure: boolean;
 }
 
 const initialFormData: CampaignFormData = {
@@ -75,14 +77,10 @@ const initialFormData: CampaignFormData = {
   description: "",
   owner: "Current User",
   
-  segmentId: "",
-  segmentName: "",
+  selectedSegmentIds: [],
+  uploadedFileName: "",
+  uploadedFileCustomers: 0,
   totalCustomers: 0,
-  activePercent: 0,
-  dormantPercent: 0,
-  highValue: 0,
-  mediumValue: 0,
-  lowValue: 0,
   
   channels: {
     sms: false,
@@ -90,44 +88,37 @@ const initialFormData: CampaignFormData = {
     app: false,
     email: false,
   },
-  messages: {
-    sms: "",
-    ussd: "",
-    appTitle: "",
-    appBody: "",
-    appDeepLink: "",
-    emailSubject: "",
-    emailBody: "",
+  channelMessages: {
+    sms: {},
+    ussd: {},
+    app: {},
+  },
+  emailContent: {
+    language: "en",
+    subject: "",
+    body: "",
+  },
+  channelSettings: {
+    sms: { cap: 0, retryOnFailure: false, priority: 1 },
+    ussd: { cap: 0, retryOnFailure: false, priority: 2 },
+    app: { cap: 0, retryOnFailure: false, priority: 3 },
+    email: { cap: 0, retryOnFailure: false, priority: 4 },
   },
   
-  enableReward: false,
-  rewardType: "fixed",
+  rewardType: "cashback",
+  rewardTypeOther: "",
   rewardValue: 0,
-  perCustomerLimit: 1,
-  campaignCap: 0,
+  rewardCapPerDay: 0,
+  rewardCapPerCustomer: 0,
   rewardAccountId: "",
   rewardAccountName: "",
   rewardAccountBalance: 0,
   
   scheduleType: "immediate",
   startDate: "",
-  startTime: "",
   endDate: "",
-  triggerType: "",
-  triggerDays: 0,
-  frequencyCap: "daily",
-  channelPriority: "sms",
-  retryOnFailure: false,
+  frequencyCap: "once_per_day",
 };
-
-const steps = [
-  { id: 1, name: "Campaign Basics" },
-  { id: 2, name: "Audience Selection" },
-  { id: 3, name: "Channel & Message" },
-  { id: 4, name: "Reward Configuration" },
-  { id: 5, name: "Schedule & Controls" },
-  { id: 6, name: "Review & Submit" },
-];
 
 export default function CampaignCreate() {
   const navigate = useNavigate();
@@ -139,25 +130,43 @@ export default function CampaignCreate() {
     if (preSelectedSegment) {
       return {
         ...initialFormData,
-        segmentId: preSelectedSegment,
-        segmentName: "Pre-selected Segment",
+        selectedSegmentIds: [preSelectedSegment],
         totalCustomers: 45000,
-        activePercent: 78,
-        dormantPercent: 22,
-        highValue: 35,
-        mediumValue: 45,
-        lowValue: 20,
       };
     }
     return initialFormData;
   });
+
+  // Calculate steps based on campaign type
+  const isIncentive = formData.type === "incentive";
+  const steps = isIncentive
+    ? [
+        { id: 1, name: "Campaign Basics" },
+        { id: 2, name: "Audience Selection" },
+        { id: 3, name: "Channel & Message" },
+        { id: 4, name: "Reward Configuration" },
+        { id: 5, name: "Schedule & Controls" },
+        { id: 6, name: "Review & Submit" },
+      ]
+    : [
+        { id: 1, name: "Campaign Basics" },
+        { id: 2, name: "Audience Selection" },
+        { id: 3, name: "Channel & Message" },
+        { id: 4, name: "Schedule & Controls" },
+        { id: 5, name: "Review & Submit" },
+      ];
+
+  const maxStep = steps.length;
 
   const updateFormData = (updates: Partial<CampaignFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
   const validateStep = (step: number): boolean => {
-    switch (step) {
+    // Map step numbers based on campaign type
+    const actualStep = isIncentive ? step : (step >= 4 ? step + 1 : step);
+    
+    switch (actualStep) {
       case 1:
         if (!formData.name || !formData.type || !formData.objective) {
           toast.error("Please fill in all required fields");
@@ -165,8 +174,8 @@ export default function CampaignCreate() {
         }
         return true;
       case 2:
-        if (!formData.segmentId) {
-          toast.error("Please select a segment");
+        if (formData.selectedSegmentIds.length === 0 && !formData.uploadedFileName) {
+          toast.error("Please select at least one segment or upload a file");
           return false;
         }
         return true;
@@ -176,26 +185,23 @@ export default function CampaignCreate() {
           toast.error("Please select at least one channel");
           return false;
         }
-        // Check if selected channels have messages
-        if (formData.channels.sms && !formData.messages.sms) {
-          toast.error("Please enter SMS message");
-          return false;
-        }
-        if (formData.channels.ussd && !formData.messages.ussd) {
-          toast.error("Please enter USSD message");
-          return false;
-        }
-        if (formData.channels.app && (!formData.messages.appTitle || !formData.messages.appBody)) {
-          toast.error("Please enter App notification title and body");
-          return false;
-        }
-        if (formData.channels.email && (!formData.messages.emailSubject || !formData.messages.emailBody)) {
-          toast.error("Please enter Email subject and body");
-          return false;
+        // Check channel priorities if multiple channels
+        const selectedChannelsCount = Object.values(formData.channels).filter(Boolean).length;
+        if (selectedChannelsCount > 1) {
+          const priorities = [];
+          if (formData.channels.sms) priorities.push(formData.channelSettings.sms.priority);
+          if (formData.channels.ussd) priorities.push(formData.channelSettings.ussd.priority);
+          if (formData.channels.app) priorities.push(formData.channelSettings.app.priority);
+          if (formData.channels.email) priorities.push(formData.channelSettings.email.priority);
+          
+          if (priorities.some(p => !p || p <= 0)) {
+            toast.error("Please set priority for all selected channels");
+            return false;
+          }
         }
         return true;
       case 4:
-        if (formData.enableReward) {
+        if (isIncentive) {
           if (!formData.rewardValue || formData.rewardValue <= 0) {
             toast.error("Please enter a valid reward value");
             return false;
@@ -213,8 +219,8 @@ export default function CampaignCreate() {
         return true;
       case 5:
         if (formData.scheduleType === "scheduled") {
-          if (!formData.startDate || !formData.startTime) {
-            toast.error("Please set start date and time");
+          if (!formData.startDate || !formData.endDate) {
+            toast.error("Please set start and end dates");
             return false;
           }
         }
@@ -226,7 +232,7 @@ export default function CampaignCreate() {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 6));
+      setCurrentStep(prev => Math.min(prev + 1, maxStep));
     }
   };
 
@@ -240,8 +246,8 @@ export default function CampaignCreate() {
   };
 
   const handleSubmit = () => {
-    toast.success("Campaign submitted for approval");
-    navigate("/campaigns");
+    toast.success("Campaign submitted for approval successfully.");
+    navigate("/campaigns/approvals");
   };
 
   const handleCancel = () => {
@@ -249,21 +255,38 @@ export default function CampaignCreate() {
   };
 
   const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return <CampaignBasicsStep formData={formData} updateFormData={updateFormData} />;
-      case 2:
-        return <AudienceSelectionStep formData={formData} updateFormData={updateFormData} />;
-      case 3:
-        return <ChannelMessageStep formData={formData} updateFormData={updateFormData} />;
-      case 4:
-        return <RewardConfigStep formData={formData} updateFormData={updateFormData} />;
-      case 5:
-        return <ScheduleControlsStep formData={formData} updateFormData={updateFormData} />;
-      case 6:
-        return <ReviewSubmitStep formData={formData} />;
-      default:
-        return null;
+    if (isIncentive) {
+      switch (currentStep) {
+        case 1:
+          return <CampaignBasicsStep formData={formData} updateFormData={updateFormData} />;
+        case 2:
+          return <AudienceSelectionStep formData={formData} updateFormData={updateFormData} />;
+        case 3:
+          return <ChannelMessageStep formData={formData} updateFormData={updateFormData} />;
+        case 4:
+          return <RewardConfigStep formData={formData} updateFormData={updateFormData} />;
+        case 5:
+          return <ScheduleControlsStep formData={formData} updateFormData={updateFormData} />;
+        case 6:
+          return <ReviewSubmitStep formData={formData} />;
+        default:
+          return null;
+      }
+    } else {
+      switch (currentStep) {
+        case 1:
+          return <CampaignBasicsStep formData={formData} updateFormData={updateFormData} />;
+        case 2:
+          return <AudienceSelectionStep formData={formData} updateFormData={updateFormData} />;
+        case 3:
+          return <ChannelMessageStep formData={formData} updateFormData={updateFormData} />;
+        case 4:
+          return <ScheduleControlsStep formData={formData} updateFormData={updateFormData} />;
+        case 5:
+          return <ReviewSubmitStep formData={formData} />;
+        default:
+          return null;
+      }
     }
   };
 
@@ -288,24 +311,24 @@ export default function CampaignCreate() {
               <div className="flex flex-col items-center">
                 <div
                   className={`w-8 h-8 flex items-center justify-center border-2 font-medium text-sm ${
-                    currentStep > step.id
+                    currentStep > index + 1
                       ? "bg-primary border-primary text-primary-foreground"
-                      : currentStep === step.id
+                      : currentStep === index + 1
                       ? "border-primary text-primary"
                       : "border-muted-foreground/30 text-muted-foreground"
                   }`}
                 >
-                  {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
+                  {currentStep > index + 1 ? <Check className="w-4 h-4" /> : index + 1}
                 </div>
                 <span className={`text-xs mt-1 text-center max-w-[80px] ${
-                  currentStep >= step.id ? "text-foreground" : "text-muted-foreground"
+                  currentStep >= index + 1 ? "text-foreground" : "text-muted-foreground"
                 }`}>
                   {step.name}
                 </span>
               </div>
               {index < steps.length - 1 && (
                 <div className={`flex-1 h-0.5 mx-2 ${
-                  currentStep > step.id ? "bg-primary" : "bg-muted"
+                  currentStep > index + 1 ? "bg-primary" : "bg-muted"
                 }`} />
               )}
             </div>
@@ -331,7 +354,7 @@ export default function CampaignCreate() {
         </Button>
         
         <div className="flex gap-3">
-          {currentStep === 6 ? (
+          {currentStep === maxStep ? (
             <>
               <Button variant="outline" onClick={handleSaveDraft} className="gap-2">
                 <Save className="w-4 h-4" />

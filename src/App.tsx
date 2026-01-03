@@ -11,6 +11,7 @@ import SegmentCreation from "./pages/SegmentCreation";
 import Campaigns from "./pages/Campaigns";
 import CampaignCreate from "./pages/CampaignCreate";
 import CampaignDetail from "./pages/CampaignDetail";
+import CampaignApproval from "./pages/CampaignApproval";
 import AIInsights from "./pages/AIInsights";
 import Customer360 from "./pages/Customer360";
 import Reports from "./pages/Reports";
@@ -47,6 +48,8 @@ const App = () => (
                   <Route path="/campaigns" element={<Campaigns />} />
                   <Route path="/campaigns/create" element={<CampaignCreate />} />
                   <Route path="/campaigns/:id" element={<CampaignDetail />} />
+                  <Route path="/campaigns/:id/approval" element={<CampaignApproval />} />
+                  <Route path="/campaigns/approvals" element={<Campaigns />} />
                   <Route path="/ai-insights" element={<AIInsights />} />
                   <Route path="/customer-360" element={<Customer360 />} />
                   <Route path="/reports" element={<Reports />} />

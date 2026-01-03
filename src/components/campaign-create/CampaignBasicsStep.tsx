@@ -1,33 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CampaignFormData } from "@/pages/CampaignCreate";
 
 interface CampaignBasicsStepProps {
   formData: CampaignFormData;
   updateFormData: (updates: Partial<CampaignFormData>) => void;
 }
-
-const campaignTypes = [
-  { value: "informational", label: "Informational" },
-  { value: "incentive", label: "Incentive" },
-  { value: "winback", label: "Win-back" },
-  { value: "crosssell", label: "Cross-sell" },
-];
-
-const campaignObjectives = [
-  { value: "activation", label: "Activation" },
-  { value: "reactivation", label: "Reactivation" },
-  { value: "frequency", label: "Frequency Increase" },
-  { value: "value", label: "Value Increase" },
-];
 
 export function CampaignBasicsStep({ formData, updateFormData }: CampaignBasicsStepProps) {
   return (
@@ -38,6 +18,7 @@ export function CampaignBasicsStep({ formData, updateFormData }: CampaignBasicsS
       </div>
 
       <div className="space-y-4">
+        {/* Campaign Name */}
         <div className="space-y-2">
           <Label htmlFor="name">Campaign Name <span className="text-destructive">*</span></Label>
           <Input
@@ -48,38 +29,55 @@ export function CampaignBasicsStep({ formData, updateFormData }: CampaignBasicsS
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="type">Campaign Type <span className="text-destructive">*</span></Label>
-          <Select value={formData.type} onValueChange={(value) => updateFormData({ type: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select campaign type" />
-            </SelectTrigger>
-            <SelectContent>
-              {campaignTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Campaign Type - Radio Buttons */}
+        <div className="space-y-3">
+          <Label>Campaign Type <span className="text-destructive">*</span></Label>
+          <RadioGroup
+            value={formData.type}
+            onValueChange={(value) => updateFormData({ type: value })}
+            className="flex flex-col gap-3"
+          >
+            <label
+              className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${
+                formData.type === "informational" ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+              }`}
+            >
+              <RadioGroupItem value="informational" id="informational" />
+              <div>
+                <p className="font-medium">Informational</p>
+                <p className="text-sm text-muted-foreground">Send informational messages without rewards</p>
+              </div>
+            </label>
+            <label
+              className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${
+                formData.type === "incentive" ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+              }`}
+            >
+              <RadioGroupItem value="incentive" id="incentive" />
+              <div>
+                <p className="font-medium">Incentive</p>
+                <p className="text-sm text-muted-foreground">Include rewards to incentivize customer action</p>
+              </div>
+            </label>
+          </RadioGroup>
         </div>
 
+        {/* Campaign Objective - Text Input */}
         <div className="space-y-2">
           <Label htmlFor="objective">Campaign Objective <span className="text-destructive">*</span></Label>
-          <Select value={formData.objective} onValueChange={(value) => updateFormData({ objective: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select campaign objective" />
-            </SelectTrigger>
-            <SelectContent>
-              {campaignObjectives.map((obj) => (
-                <SelectItem key={obj.value} value={obj.value}>
-                  {obj.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            id="objective"
+            placeholder="e.g., Activate dormant high-value customers"
+            value={formData.objective}
+            onChange={(e) => updateFormData({ objective: e.target.value.slice(0, 100) })}
+            maxLength={100}
+          />
+          <p className="text-xs text-muted-foreground text-right">
+            {formData.objective.length}/100 characters
+          </p>
         </div>
 
+        {/* Campaign Description */}
         <div className="space-y-2">
           <Label htmlFor="description">Description (Optional)</Label>
           <Textarea
@@ -91,6 +89,7 @@ export function CampaignBasicsStep({ formData, updateFormData }: CampaignBasicsS
           />
         </div>
 
+        {/* Owner */}
         <div className="space-y-2">
           <Label htmlFor="owner">Owner</Label>
           <Input

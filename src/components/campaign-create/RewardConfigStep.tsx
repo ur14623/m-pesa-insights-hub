@@ -1,7 +1,6 @@
 import { Gift, Wallet, AlertTriangle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -9,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CampaignFormData } from "@/pages/CampaignCreate";
 
 interface RewardConfigStepProps {
@@ -26,11 +26,11 @@ export function RewardConfigStep({ formData, updateFormData }: RewardConfigStepP
   const selectedAccount = rewardAccounts.find((a) => a.id === formData.rewardAccountId);
   const availableBalance = selectedAccount ? selectedAccount.balance - selectedAccount.reserved : 0;
   
-  const estimatedCost = formData.enableReward && formData.rewardValue && formData.totalCustomers
+  const estimatedCost = formData.rewardValue && formData.totalCustomers
     ? formData.rewardValue * formData.totalCustomers
     : 0;
   
-  const isInsufficientBalance = estimatedCost > availableBalance && formData.enableReward;
+  const isInsufficientBalance = estimatedCost > availableBalance;
 
   const handleAccountSelect = (accountId: string) => {
     const account = rewardAccounts.find((a) => a.id === accountId);
@@ -43,155 +43,190 @@ export function RewardConfigStep({ formData, updateFormData }: RewardConfigStepP
     }
   };
 
+  // This step should only be visible for Incentive campaigns
+  if (formData.type !== "incentive") {
+    return (
+      <div className="space-y-6 max-w-2xl">
+        <div>
+          <h2 className="text-lg font-semibold mb-1">Reward Configuration</h2>
+          <p className="text-sm text-muted-foreground">Configure incentives for this campaign</p>
+        </div>
+        <div className="border p-8 text-center text-muted-foreground bg-muted/20">
+          <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p className="font-medium">Rewards Not Applicable</p>
+          <p className="text-sm mt-1">
+            This campaign is set as Informational. Rewards are only available for Incentive campaigns.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
         <h2 className="text-lg font-semibold mb-1">Reward Configuration</h2>
-        <p className="text-sm text-muted-foreground">Configure incentives for this campaign (optional)</p>
+        <p className="text-sm text-muted-foreground">Configure incentives for this campaign</p>
       </div>
 
-      {/* Enable Reward Toggle */}
-      <div className="flex items-center justify-between p-4 border">
-        <div className="flex items-center gap-3">
-          <Gift className="w-5 h-5 text-primary" />
-          <div>
-            <p className="font-medium">Enable Reward</p>
-            <p className="text-sm text-muted-foreground">Add incentives to this campaign</p>
-          </div>
-        </div>
-        <Switch
-          checked={formData.enableReward}
-          onCheckedChange={(checked) => updateFormData({ enableReward: checked })}
-        />
-      </div>
-
-      {formData.enableReward && (
-        <div className="space-y-4 p-4 border bg-muted/20">
-          {/* Reward Type */}
-          <div className="space-y-2">
-            <Label>Reward Type</Label>
-            <Select
-              value={formData.rewardType}
-              onValueChange={(value) => updateFormData({ rewardType: value })}
+      <div className="space-y-4 p-4 border">
+        {/* Reward Type */}
+        <div className="space-y-3">
+          <Label>Reward Type <span className="text-destructive">*</span></Label>
+          <RadioGroup
+            value={formData.rewardType}
+            onValueChange={(value) => updateFormData({ rewardType: value })}
+            className="flex flex-col gap-2"
+          >
+            <label
+              className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
+                formData.rewardType === "cashback" ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+              }`}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select reward type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fixed">Fixed Amount</SelectItem>
-                <SelectItem value="cashback">Cashback Percentage</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <RadioGroupItem value="cashback" id="cashback" />
+              <span className="font-medium">Cashback</span>
+            </label>
+            <label
+              className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
+                formData.rewardType === "bonus" ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+              }`}
+            >
+              <RadioGroupItem value="bonus" id="bonus" />
+              <span className="font-medium">Bonus</span>
+            </label>
+            <label
+              className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
+                formData.rewardType === "other" ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+              }`}
+            >
+              <RadioGroupItem value="other" id="other" />
+              <span className="font-medium">Other</span>
+            </label>
+          </RadioGroup>
+          {formData.rewardType === "other" && (
+            <Input
+              placeholder="Specify reward type"
+              value={formData.rewardTypeOther || ""}
+              onChange={(e) => updateFormData({ rewardTypeOther: e.target.value })}
+              className="mt-2"
+            />
+          )}
+        </div>
 
-          {/* Reward Value */}
-          <div className="space-y-2">
-            <Label>
-              Reward Value ({formData.rewardType === "cashback" ? "%" : "ETB"})
-            </Label>
+        {/* Reward Value */}
+        <div className="space-y-2">
+          <Label>Reward Value (ETB) <span className="text-destructive">*</span></Label>
+          <div className="relative">
             <Input
               type="number"
-              placeholder={formData.rewardType === "cashback" ? "Enter percentage" : "Enter amount"}
+              placeholder="Enter amount"
               value={formData.rewardValue || ""}
               onChange={(e) => updateFormData({ rewardValue: Number(e.target.value) })}
+              className="pr-12"
             />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              ETB
+            </span>
           </div>
+        </div>
 
-          {/* Limits */}
+        {/* Reward Cap */}
+        <div className="space-y-3">
+          <Label>Reward Cap</Label>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Per-Customer Limit</Label>
+              <Label className="text-sm text-muted-foreground">Per Day (Global)</Label>
               <Input
                 type="number"
-                placeholder="Max per customer"
-                value={formData.perCustomerLimit || ""}
-                onChange={(e) => updateFormData({ perCustomerLimit: Number(e.target.value) })}
+                placeholder="Daily cap"
+                value={formData.rewardCapPerDay || ""}
+                onChange={(e) => updateFormData({ rewardCapPerDay: Number(e.target.value) })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Campaign Cap (ETB)</Label>
+              <Label className="text-sm text-muted-foreground">Per Customer Per Day</Label>
               <Input
                 type="number"
-                placeholder="Total budget cap"
-                value={formData.campaignCap || ""}
-                onChange={(e) => updateFormData({ campaignCap: Number(e.target.value) })}
+                placeholder="Per customer cap"
+                value={formData.rewardCapPerCustomer || ""}
+                onChange={(e) => updateFormData({ rewardCapPerCustomer: Number(e.target.value) })}
               />
             </div>
           </div>
-
-          {/* Reward Account Selection */}
-          <div className="space-y-2">
-            <Label>Reward Account</Label>
-            <Select
-              value={formData.rewardAccountId}
-              onValueChange={handleAccountSelect}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select reward account" />
-              </SelectTrigger>
-              <SelectContent>
-                {rewardAccounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    <div className="flex items-center justify-between w-full gap-4">
-                      <span>{account.name}</span>
-                      <span className="text-muted-foreground">
-                        {(account.balance - account.reserved).toLocaleString()} {account.currency} available
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Account Balance Display */}
-          {selectedAccount && (
-            <div className="p-4 border bg-background space-y-3">
-              <div className="flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-primary" />
-                <span className="font-medium">{selectedAccount.name}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Current Balance</p>
-                  <p className="font-semibold">{selectedAccount.balance.toLocaleString()} ETB</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Reserved</p>
-                  <p className="font-semibold text-warning">{selectedAccount.reserved.toLocaleString()} ETB</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Available</p>
-                  <p className="font-semibold text-success">{availableBalance.toLocaleString()} ETB</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Estimated Cost */}
-          {formData.totalCustomers > 0 && formData.rewardValue > 0 && (
-            <div className={`p-4 border ${isInsufficientBalance ? "border-destructive bg-destructive/5" : "bg-info/5 border-info/20"}`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Estimated Total Cost</p>
-                  <p className="text-xl font-bold">
-                    {estimatedCost.toLocaleString()} ETB
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formData.rewardValue} ETB × {formData.totalCustomers.toLocaleString()} customers
-                  </p>
-                </div>
-                {isInsufficientBalance && (
-                  <div className="flex items-center gap-2 text-destructive">
-                    <AlertTriangle className="w-5 h-5" />
-                    <span className="text-sm font-medium">Insufficient Balance</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
-      )}
+
+        {/* Reward Account Selection */}
+        <div className="space-y-2">
+          <Label>Reward Account <span className="text-destructive">*</span></Label>
+          <Select
+            value={formData.rewardAccountId}
+            onValueChange={handleAccountSelect}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select reward account" />
+            </SelectTrigger>
+            <SelectContent>
+              {rewardAccounts.map((account) => (
+                <SelectItem key={account.id} value={account.id}>
+                  <div className="flex items-center justify-between w-full gap-4">
+                    <span>{account.name}</span>
+                    <span className="text-muted-foreground">
+                      {(account.balance - account.reserved).toLocaleString()} {account.currency} available
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Account Balance Display */}
+        {selectedAccount && (
+          <div className="p-4 border bg-background space-y-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-primary" />
+              <span className="font-medium">{selectedAccount.name}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Current Balance</p>
+                <p className="font-semibold">{selectedAccount.balance.toLocaleString()} ETB</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Reserved</p>
+                <p className="font-semibold text-warning">{selectedAccount.reserved.toLocaleString()} ETB</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Available</p>
+                <p className="font-semibold text-success">{availableBalance.toLocaleString()} ETB</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Estimated Cost */}
+        {formData.totalCustomers > 0 && formData.rewardValue > 0 && (
+          <div className={`p-4 border ${isInsufficientBalance ? "border-destructive bg-destructive/5" : "bg-info/5 border-info/20"}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Estimated Total Cost</p>
+                <p className="text-xl font-bold">
+                  {estimatedCost.toLocaleString()} ETB
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formData.rewardValue} ETB × {formData.totalCustomers.toLocaleString()} customers
+                </p>
+              </div>
+              {isInsufficientBalance && (
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="w-5 h-5" />
+                  <span className="text-sm font-medium">Insufficient Balance</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

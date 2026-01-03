@@ -6,24 +6,12 @@ interface ReviewSubmitStepProps {
   formData: CampaignFormData;
 }
 
-const getTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    informational: "Informational",
-    incentive: "Incentive",
-    winback: "Win-back",
-    crosssell: "Cross-sell",
-  };
-  return labels[type] || type;
-};
-
-const getObjectiveLabel = (objective: string) => {
-  const labels: Record<string, string> = {
-    activation: "Activation",
-    reactivation: "Reactivation",
-    frequency: "Frequency Increase",
-    value: "Value Increase",
-  };
-  return labels[objective] || objective;
+const languageNames: Record<string, string> = {
+  en: "English",
+  am: "Amharic",
+  or: "Afaan Oromo",
+  ti: "Tigrigna",
+  so: "Somali",
 };
 
 export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
@@ -31,7 +19,7 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
     .filter(([_, enabled]) => enabled)
     .map(([channel]) => channel.toUpperCase());
 
-  const estimatedCost = formData.enableReward
+  const estimatedCost = formData.type === "incentive" && formData.rewardValue
     ? formData.rewardValue * formData.totalCustomers
     : 0;
 
@@ -42,15 +30,21 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
   if (estimatedCost > 1000000) {
     warnings.push("High cost: Estimated reward cost exceeds 1,000,000 ETB");
   }
-  if (formData.enableReward && formData.type === "informational") {
-    warnings.push("Reward dependency: Informational campaigns typically don't include rewards");
-  }
+
+  // Get configured languages for SMS/USSD/App
+  const getConfiguredLanguages = (channel: "sms" | "ussd" | "app") => {
+    const messages = formData.channelMessages[channel];
+    if (!messages) return [];
+    return Object.entries(messages)
+      .filter(([_, msg]) => msg && msg.trim().length > 0)
+      .map(([lang]) => languageNames[lang] || lang);
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-1">Review & Submit</h2>
-        <p className="text-sm text-muted-foreground">Verify all details before launching</p>
+        <p className="text-sm text-muted-foreground">Verify all details before submitting for approval</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -67,11 +61,11 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Type</span>
-              <Badge variant="outline">{getTypeLabel(formData.type)}</Badge>
+              <Badge variant="outline" className="capitalize">{formData.type}</Badge>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Objective</span>
-              <span className="font-medium">{getObjectiveLabel(formData.objective)}</span>
+              <span className="font-medium max-w-[200px] text-right">{formData.objective}</span>
             </div>
             {formData.description && (
               <div>
@@ -93,17 +87,27 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
             <h3 className="font-semibold">Audience Summary</h3>
           </div>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Segment</span>
-              <span className="font-medium">{formData.segmentName}</span>
+            <div>
+              <span className="text-muted-foreground">Selected Segments</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {formData.selectedSegmentIds.length > 0 ? (
+                  formData.selectedSegmentIds.map((id) => (
+                    <Badge key={id} variant="outline">{id}</Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground">None</span>
+                )}
+              </div>
             </div>
+            {formData.uploadedFileName && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Uploaded File</span>
+                <span className="font-medium">{formData.uploadedFileName}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Customers</span>
               <span className="font-bold text-lg">{formData.totalCustomers.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Active / Dormant</span>
-              <span>{formData.activePercent}% / {formData.dormantPercent}%</span>
             </div>
           </div>
         </div>
@@ -120,29 +124,46 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
                 <Badge key={channel} variant="secondary">{channel}</Badge>
               ))}
             </div>
+            
             {formData.channels.sms && (
               <div className="p-3 bg-muted text-sm">
-                <p className="text-xs text-muted-foreground mb-1">SMS Message</p>
-                <p className="line-clamp-2">{formData.messages.sms}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  SMS ({getConfiguredLanguages("sms").join(", ") || "No messages configured"})
+                </p>
+                <p className="line-clamp-2">
+                  {formData.channelMessages.sms?.en || formData.channelMessages.sms?.am || "Message preview..."}
+                </p>
               </div>
             )}
+            
             {formData.channels.ussd && (
               <div className="p-3 bg-muted text-sm">
-                <p className="text-xs text-muted-foreground mb-1">USSD Message</p>
-                <p className="line-clamp-2">{formData.messages.ussd}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  USSD ({getConfiguredLanguages("ussd").join(", ") || "No messages configured"})
+                </p>
+                <p className="line-clamp-2">
+                  {formData.channelMessages.ussd?.en || formData.channelMessages.ussd?.am || "Message preview..."}
+                </p>
               </div>
             )}
+            
             {formData.channels.app && (
               <div className="p-3 bg-muted text-sm">
-                <p className="text-xs text-muted-foreground mb-1">App Notification</p>
-                <p className="font-medium">{formData.messages.appTitle}</p>
-                <p className="line-clamp-2">{formData.messages.appBody}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  App Push ({getConfiguredLanguages("app").join(", ") || "No messages configured"})
+                </p>
+                <p className="line-clamp-2">
+                  {formData.channelMessages.app?.en || formData.channelMessages.app?.am || "Message preview..."}
+                </p>
               </div>
             )}
+            
             {formData.channels.email && (
               <div className="p-3 bg-muted text-sm">
-                <p className="text-xs text-muted-foreground mb-1">Email</p>
-                <p className="font-medium">{formData.messages.emailSubject}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Email ({languageNames[formData.emailContent.language] || "English"})
+                </p>
+                <p className="font-medium">{formData.emailContent.subject || "Subject"}</p>
               </div>
             )}
           </div>
@@ -154,7 +175,7 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
             <Gift className="w-4 h-4 text-primary" />
             <h3 className="font-semibold">Reward Summary</h3>
           </div>
-          {formData.enableReward ? (
+          {formData.type === "incentive" ? (
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Reward Type</span>
@@ -162,10 +183,20 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Reward Value</span>
-                <span className="font-medium">
-                  {formData.rewardValue} {formData.rewardType === "cashback" ? "%" : "ETB"}
-                </span>
+                <span className="font-medium">{formData.rewardValue} ETB</span>
               </div>
+              {formData.rewardCapPerDay && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Daily Cap</span>
+                  <span className="font-medium">{formData.rewardCapPerDay.toLocaleString()} ETB</span>
+                </div>
+              )}
+              {formData.rewardCapPerCustomer && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Per Customer Cap</span>
+                  <span className="font-medium">{formData.rewardCapPerCustomer.toLocaleString()} ETB</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Reward Account</span>
                 <span className="font-medium">{formData.rewardAccountName}</span>
@@ -176,7 +207,7 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No rewards configured</p>
+            <p className="text-sm text-muted-foreground">No rewards configured (Informational campaign)</p>
           )}
         </div>
 
@@ -195,23 +226,17 @@ export function ReviewSubmitStep({ formData }: ReviewSubmitStepProps) {
               <>
                 <div>
                   <p className="text-muted-foreground">Start Date</p>
-                  <p className="font-medium">{formData.startDate} {formData.startTime}</p>
+                  <p className="font-medium">{formData.startDate}</p>
                 </div>
-                {formData.endDate && (
-                  <div>
-                    <p className="text-muted-foreground">End Date</p>
-                    <p className="font-medium">{formData.endDate}</p>
-                  </div>
-                )}
+                <div>
+                  <p className="text-muted-foreground">End Date</p>
+                  <p className="font-medium">{formData.endDate}</p>
+                </div>
               </>
             )}
             <div>
               <p className="text-muted-foreground">Frequency Cap</p>
-              <p className="font-medium capitalize">{formData.frequencyCap}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Retry on Failure</p>
-              <p className="font-medium">{formData.retryOnFailure ? "Yes" : "No"}</p>
+              <p className="font-medium capitalize">{formData.frequencyCap.replace(/_/g, " ")}</p>
             </div>
           </div>
         </div>

@@ -1,112 +1,106 @@
-import { useState, useEffect } from "react";
-import { MetricCard } from "@/components/MetricCard";
-import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
-
-// Full metrics list with types and slugs
-const metrics = [
-  // Daily Metrics
-  { title: "Daily Active Customers", slug: "daily-active-customers", type: "daily" as const },
-  { title: "Daily Gross Adds", slug: "daily-gross-adds", type: "daily" as const },
-  { title: "Daily Non-Gross Adds", slug: "daily-non-gross-adds", type: "daily" as const },
-  { title: "Daily App Downloads", slug: "daily-app-downloads", type: "daily" as const },
-  { title: "Daily Active Micro Merchants", slug: "daily-active-micro-merchants", type: "daily" as const },
-  { title: "Daily Active Unified Merchants", slug: "daily-active-unified-merchants", type: "daily" as const },
-  
-  // 30D Metrics
-  { title: "30D Active Total", slug: "30d-active-total", type: "30d" as const },
-  { title: "30D Active New", slug: "30d-active-new", type: "30d" as const },
-  { title: "30D Active Existing", slug: "30d-active-existing", type: "30d" as const },
-  { title: "30D Active Transacting Total", slug: "30d-active-transacting-total", type: "30d" as const },
-  { title: "30D Active New (txn)", slug: "30d-active-new-txn", type: "30d" as const },
-  { title: "30D Active Existing (txn)", slug: "30d-active-existing-txn", type: "30d" as const },
-  { title: "30D Active App Users", slug: "30d-active-app-users", type: "30d" as const },
-  { title: "30D App Transacting", slug: "30d-app-transacting", type: "30d" as const },
-  { title: "30D Active Micro Merchants", slug: "30d-active-micro-merchants", type: "30d" as const },
-  { title: "30D Active Unified Merchants", slug: "30d-active-unified-merchants", type: "30d" as const },
-  
-  // 90D Metrics
-  { title: "90D Active Total", slug: "90d-active-total", type: "90d" as const },
-  { title: "90D Active New", slug: "90d-active-new", type: "90d" as const },
-  { title: "90D Active Existing", slug: "90d-active-existing", type: "90d" as const },
-  { title: "90D Active Transacting Total", slug: "90d-active-transacting-total", type: "90d" as const },
-  { title: "90D Active New (txn)", slug: "90d-active-new-txn", type: "90d" as const },
-  { title: "90D Active Existing (txn)", slug: "90d-active-existing-txn", type: "90d" as const },
-];
-
-// Generate mock data for a metric
-const generateMockValue = (type: "daily" | "30d" | "90d") => {
-  if (type === "daily") return Math.floor(Math.random() * 50000) + 200000;
-  if (type === "30d") return Math.floor(Math.random() * 500000) + 1000000;
-  return Math.floor(Math.random() * 1500000) + 3000000;
-};
-
-const generateSparklineData = () => {
-  return Array.from({ length: 9 }, () => Math.floor(Math.random() * 50000) + 200000);
-};
+import { Users, UserCheck, UserMinus, Megaphone, Wallet, TrendingUp } from "lucide-react";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { ActivityChart } from "@/components/dashboard/ActivityChart";
+import { CampaignPerformance } from "@/components/dashboard/CampaignPerformance";
+import { RecentCampaigns } from "@/components/dashboard/RecentCampaigns";
+import { ChurnRiskWidget } from "@/components/dashboard/ChurnRiskWidget";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Download, Filter } from "lucide-react";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [metricsData, setMetricsData] = useState<Record<string, { value: number; sparkline: number[] }>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate fetching data - in production, this would call the API
-    const fetchData = async () => {
-      setLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const data: Record<string, { value: number; sparkline: number[] }> = {};
-      metrics.forEach(metric => {
-        data[metric.slug] = {
-          value: generateMockValue(metric.type),
-          sparkline: generateSparklineData(),
-        };
-      });
-      setMetricsData(data);
-      setLoading(false);
-    };
-    
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-primary opacity-5 blur-3xl -z-10" />
-        <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">MPESA CVM Dashboard</h1>
-        <p className="text-muted-foreground mt-1 text-sm">Real-time overview of all key metrics</p>
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of customer engagement metrics</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select defaultValue="7d">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="24h">Last 24 hours</SelectItem>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="90d">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select defaultValue="all">
+            <SelectTrigger className="w-40">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Region" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Regions</SelectItem>
+              <SelectItem value="nairobi">Nairobi</SelectItem>
+              <SelectItem value="mombasa">Mombasa</SelectItem>
+              <SelectItem value="kisumu">Kisumu</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon">
+            <Download className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* 4-column responsive grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric, idx) => {
-          const data = metricsData[metric.slug];
-          return (
-            <div 
-              key={metric.slug} 
-              className="animate-fade-in" 
-              style={{ animationDelay: `${idx * 30}ms` }}
-            >
-              <MetricCard
-                title={metric.title}
-                value={data?.value || 0}
-                type={metric.type}
-                sparklineData={data?.sparkline}
-                onNavigate={() => navigate(`/metric/${metric.slug}`)}
-              />
-            </div>
-          );
-        })}
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <MetricCard
+          title="Total Customers"
+          value="2.4M"
+          change={5.2}
+          changeLabel="from last month"
+          icon={<Users className="w-5 h-5 text-accent-foreground" />}
+        />
+        <MetricCard
+          title="Active (7 days)"
+          value="1.8M"
+          change={3.1}
+          changeLabel="from last week"
+          icon={<UserCheck className="w-5 h-5 text-accent-foreground" />}
+        />
+        <MetricCard
+          title="Dormant (30+ days)"
+          value="420K"
+          change={-2.4}
+          changeLabel="from last month"
+          icon={<UserMinus className="w-5 h-5 text-accent-foreground" />}
+        />
+        <MetricCard
+          title="Campaigns Running"
+          value="12"
+          icon={<Megaphone className="w-5 h-5 text-accent-foreground" />}
+        />
+        <MetricCard
+          title="Reward Balance"
+          value="KES 4.2M"
+          change={-15}
+          changeLabel="usage rate up"
+          icon={<Wallet className="w-5 h-5 text-accent-foreground" />}
+        />
+        <MetricCard
+          title="Activation Rate"
+          value="68%"
+          change={8.3}
+          changeLabel="improvement"
+          icon={<TrendingUp className="w-5 h-5 text-accent-foreground" />}
+        />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <ActivityChart />
+        <ChurnRiskWidget />
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CampaignPerformance />
+        <RecentCampaigns />
       </div>
     </div>
   );

@@ -83,7 +83,10 @@ export function useCodeStorage() {
   };
 
   const getCodeById = (id: string): CodeEntry | null => {
-    return codes.find(c => c.id === id) || null;
+    // Load directly from localStorage to avoid timing issues with state
+    if (!user) return null;
+    const allCodes = JSON.parse(localStorage.getItem('playwright-codes') || '[]');
+    return allCodes.find((c: CodeEntry) => c.id === id && c.userId === user.id) || null;
   };
 
   return { codes, saveCode, updateCode, deleteCode, getCodeById };

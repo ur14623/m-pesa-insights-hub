@@ -22,28 +22,20 @@ export function Header() {
           <span className="font-semibold text-lg hidden sm:block">Playwright Lab</span>
         </Link>
 
-        <nav className="flex items-center gap-4">
-          {user ? (
-            <>
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">{user.id}</span>
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
-            </>
-          ) : (
-            <Link to="/login">
-              <Button variant="default" size="sm" className="glow-primary">
-                Login
+        {user && (
+          <nav className="flex items-center gap-4">
+            <Link to="/dashboard">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">{user.id}</span>
               </Button>
             </Link>
-          )}
-        </nav>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+          </nav>
+        )}
       </div>
     </header>
   );

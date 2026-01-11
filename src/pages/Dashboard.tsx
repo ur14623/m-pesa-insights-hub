@@ -1,107 +1,162 @@
-import { Users, UserCheck, UserMinus, Megaphone, Wallet, TrendingUp } from "lucide-react";
-import { MetricCard } from "@/components/dashboard/MetricCard";
-import { ActivityChart } from "@/components/dashboard/ActivityChart";
-import { CampaignPerformance } from "@/components/dashboard/CampaignPerformance";
-import { RecentCampaigns } from "@/components/dashboard/RecentCampaigns";
-import { ChurnRiskWidget } from "@/components/dashboard/ChurnRiskWidget";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Filter } from "lucide-react";
+import { Link, Navigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Header } from '@/components/Header';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCodeStorage } from '@/hooks/useCodeStorage';
+import { Plus, Eye, Pencil, Trash2, Code2, FileCode } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const { codes, deleteCode } = useCodeStorage();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const handleDelete = (id: string, title: string) => {
+    deleteCode(id);
+    toast.success(`"${title}" deleted successfully`);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of customer engagement metrics</p>
+    <div className="min-h-screen">
+      <Header />
+      
+      <main className="pt-24 pb-12 px-6">
+        <div className="container mx-auto max-w-5xl">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-1">My Code Library</h1>
+              <p className="text-muted-foreground">
+                {codes.length} {codes.length === 1 ? 'script' : 'scripts'} saved
+              </p>
+            </div>
+            <Link to="/write">
+              <Button className="gap-2 glow-primary">
+                <Plus className="w-4 h-4" />
+                Write New Code
+              </Button>
+            </Link>
+          </div>
+
+          {/* Code List */}
+          {codes.length === 0 ? (
+            <div className="glass-card p-12 text-center">
+              <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <FileCode className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No code saved yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Start by writing your first Playwright test script
+              </p>
+              <Link to="/write">
+                <Button className="gap-2 glow-primary">
+                  <Plus className="w-4 h-4" />
+                  Write Your First Code
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="glass-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-4 font-medium text-muted-foreground">Title</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden sm:table-cell">Date</th>
+                      <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {codes.map((code) => (
+                      <tr key={code.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                              <Code2 className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{code.title}</p>
+                              <p className="text-sm text-muted-foreground sm:hidden">
+                                {formatDate(code.updatedAt)}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-muted-foreground hidden sm:table-cell">
+                          {formatDate(code.updatedAt)}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link to={`/view/${code.id}`}>
+                              <Button variant="ghost" size="sm" className="gap-1.5">
+                                <Eye className="w-4 h-4" />
+                                <span className="hidden sm:inline">View</span>
+                              </Button>
+                            </Link>
+                            <Link to={`/edit/${code.id}`}>
+                              <Button variant="ghost" size="sm" className="gap-1.5">
+                                <Pencil className="w-4 h-4" />
+                                <span className="hidden sm:inline">Edit</span>
+                              </Button>
+                            </Link>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                  <span className="hidden sm:inline">Delete</span>
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete "{code.title}"?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your code.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDelete(code.id, code.title)}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          <Select defaultValue="7d">
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="24h">Last 24 hours</SelectItem>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-40">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Region" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Regions</SelectItem>
-              <SelectItem value="nairobi">Nairobi</SelectItem>
-              <SelectItem value="mombasa">Mombasa</SelectItem>
-              <SelectItem value="kisumu">Kisumu</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon">
-            <Download className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <MetricCard
-          title="Total Customers"
-          value="2.4M"
-          change={5.2}
-          changeLabel="from last month"
-          icon={<Users className="w-5 h-5 text-accent-foreground" />}
-        />
-        <MetricCard
-          title="Active (7 days)"
-          value="1.8M"
-          change={3.1}
-          changeLabel="from last week"
-          icon={<UserCheck className="w-5 h-5 text-accent-foreground" />}
-        />
-        <MetricCard
-          title="Dormant (30+ days)"
-          value="420K"
-          change={-2.4}
-          changeLabel="from last month"
-          icon={<UserMinus className="w-5 h-5 text-accent-foreground" />}
-        />
-        <MetricCard
-          title="Campaigns Running"
-          value="12"
-          icon={<Megaphone className="w-5 h-5 text-accent-foreground" />}
-        />
-        <MetricCard
-          title="Reward Balance"
-          value="KES 4.2M"
-          change={-15}
-          changeLabel="usage rate up"
-          icon={<Wallet className="w-5 h-5 text-accent-foreground" />}
-        />
-        <MetricCard
-          title="Activation Rate"
-          value="68%"
-          change={8.3}
-          changeLabel="improvement"
-          icon={<TrendingUp className="w-5 h-5 text-accent-foreground" />}
-        />
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <ActivityChart />
-        <ChurnRiskWidget />
-      </div>
-
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CampaignPerformance />
-        <RecentCampaigns />
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,162 +1,118 @@
-import { Link, Navigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Header } from '@/components/Header';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCodeStorage } from '@/hooks/useCodeStorage';
-import { Plus, Eye, Pencil, Trash2, Code2, FileCode } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  Send,
+  CheckCircle,
+  AlertTriangle,
+  MessageSquare,
+  Radio,
+} from "lucide-react";
+import KPICard from "@/components/dashboard/KPICard";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import MessageVolumeChart from "@/components/dashboard/MessageVolumeChart";
+import DeliveryStatusChart from "@/components/dashboard/DeliveryStatusChart";
+import OperatorPerformanceTable from "@/components/dashboard/OperatorPerformanceTable";
+import RoutingHealth from "@/components/dashboard/RoutingHealth";
+import IncomingMessages from "@/components/dashboard/IncomingMessages";
+import CostUtilization from "@/components/dashboard/CostUtilization";
+import SystemHealth from "@/components/dashboard/SystemHealth";
+import AIModeration from "@/components/dashboard/AIModeration";
+import UserActivity from "@/components/dashboard/UserActivity";
+import QuickActionsGrid from "@/components/dashboard/QuickActionsGrid";
+import ComplianceStatus from "@/components/dashboard/ComplianceStatus";
 
-export default function Dashboard() {
-  const { user } = useAuth();
-  const { codes, deleteCode } = useCodeStorage();
+const Dashboard = () => {
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const handleDelete = (id: string, title: string) => {
-    deleteCode(id);
-    toast.success(`"${title}" deleted successfully`);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const handleRefresh = () => {
+    setLastUpdated(new Date());
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      
-      <main className="pt-24 pb-12 px-6">
-        <div className="container mx-auto max-w-5xl">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-1">My Code Library</h1>
-              <p className="text-muted-foreground">
-                {codes.length} {codes.length === 1 ? 'script' : 'scripts'} saved
-              </p>
-            </div>
-            <Link to="/write">
-              <Button className="gap-2 glow-primary">
-                <Plus className="w-4 h-4" />
-                Write New Code
-              </Button>
-            </Link>
-          </div>
+    <div className="space-y-6">
+      {/* Section 1: Header Summary Area */}
+      <DashboardHeader lastUpdated={lastUpdated} onRefresh={handleRefresh} />
 
-          {/* Code List */}
-          {codes.length === 0 ? (
-            <div className="glass-card p-12 text-center">
-              <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <FileCode className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">No code saved yet</h3>
-              <p className="text-muted-foreground mb-6">
-                Start by writing your first Playwright test script
-              </p>
-              <Link to="/write">
-                <Button className="gap-2 glow-primary">
-                  <Plus className="w-4 h-4" />
-                  Write Your First Code
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="glass-card overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left p-4 font-medium text-muted-foreground">Title</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden sm:table-cell">Date</th>
-                      <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {codes.map((code) => (
-                      <tr key={code.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                              <Code2 className="w-5 h-5 text-primary" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium truncate">{code.title}</p>
-                              <p className="text-sm text-muted-foreground sm:hidden">
-                                {formatDate(code.updatedAt)}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4 text-muted-foreground hidden sm:table-cell">
-                          {formatDate(code.updatedAt)}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link to={`/view/${code.id}`}>
-                              <Button variant="ghost" size="sm" className="gap-1.5">
-                                <Eye className="w-4 h-4" />
-                                <span className="hidden sm:inline">View</span>
-                              </Button>
-                            </Link>
-                            <Link to={`/edit/${code.id}`}>
-                              <Button variant="ghost" size="sm" className="gap-1.5">
-                                <Pencil className="w-4 h-4" />
-                                <span className="hidden sm:inline">Edit</span>
-                              </Button>
-                            </Link>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
-                                  <Trash2 className="w-4 h-4" />
-                                  <span className="hidden sm:inline">Delete</span>
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete "{code.title}"?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete your code.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => handleDelete(code.id, code.title)}
-                                    className="bg-destructive hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+      {/* Section 2: KPI Summary Cards (Row 1) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <KPICard
+          title="Total Messages Sent"
+          value="182,450"
+          subtitle="Today"
+          icon={Send}
+          variant="primary"
+          trend={{ value: 12.5, isPositive: true }}
+        />
+        <KPICard
+          title="Successfully Delivered"
+          value="178,230"
+          subtitle="97.7% success rate"
+          icon={CheckCircle}
+          variant="success"
+          trend={{ value: 2.3, isPositive: true }}
+        />
+        <KPICard
+          title="Failed Messages"
+          value="4,220"
+          subtitle="Network timeout"
+          icon={AlertTriangle}
+          variant="danger"
+          trend={{ value: 0.5, isPositive: false }}
+        />
+        <KPICard
+          title="Incoming Messages"
+          value="1,420"
+          subtitle="47 new/unread"
+          icon={MessageSquare}
+          variant="warning"
+          trend={{ value: 8.2, isPositive: true }}
+        />
+        <KPICard
+          title="Active Sender IDs"
+          value="6"
+          subtitle="Approved & active"
+          icon={Radio}
+          variant="primary"
+        />
+      </div>
+
+      {/* Section 3: Messaging Performance Analytics (Row 2) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <MessageVolumeChart />
         </div>
-      </main>
+        <div>
+          <DeliveryStatusChart />
+        </div>
+      </div>
+
+      {/* Section 4: Operator & Routing Performance (Row 3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OperatorPerformanceTable />
+        <RoutingHealth />
+      </div>
+
+      {/* Section 5: Incoming Messages & Cost Utilization (Row 4) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <IncomingMessages />
+        <CostUtilization />
+      </div>
+
+      {/* Section 6: System Health & AI Moderation (Row 5) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SystemHealth />
+        <AIModeration />
+      </div>
+
+      {/* Section 7: User Activity & Compliance (Row 6) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <UserActivity />
+        <ComplianceStatus />
+      </div>
+
+      {/* Section 8: Quick Action Shortcuts (Bottom) */}
+      <QuickActionsGrid />
     </div>
   );
-}
+};
+
+export default Dashboard;

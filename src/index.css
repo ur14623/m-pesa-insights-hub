@@ -1,57 +1,120 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* National SMS Platform - Dairy Sector Design System
+   Sharp corners, professional government aesthetic
+   All colors in HSL format
+*/
+
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    /* Base colors */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    /* Cards and surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 160 84% 39%;
-    --primary-foreground: 222 47% 6%;
+    /* Primary - Professional Government Blue */
+    --primary: 215 70% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 215 70% 28%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Agricultural Green */
+    --secondary: 145 45% 35%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 55%;
+    /* Accent - Ethiopian Gold */
+    --accent: 45 90% 50%;
+    --accent-foreground: 215 25% 15%;
 
-    --accent: 173 80% 40%;
-    --accent-foreground: 222 47% 6%;
+    /* Muted surfaces */
+    --muted: 210 15% 93%;
+    --muted-foreground: 215 15% 45%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive / Danger */
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 160 84% 39%;
+    /* Success */
+    --success: 145 60% 40%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.75rem;
+    /* Warning */
+    --warning: 40 90% 50%;
+    --warning-foreground: 215 25% 15%;
 
-    /* Custom tokens */
-    --glow-primary: 0 0 40px hsl(160 84% 39% / 0.3);
-    --glow-accent: 0 0 30px hsl(173 80% 40% / 0.2);
-    --gradient-hero: linear-gradient(135deg, hsl(160 84% 39% / 0.15), hsl(173 80% 40% / 0.1));
-    --gradient-card: linear-gradient(180deg, hsl(217 33% 12% / 0.5), hsl(222 47% 8%));
-    --surface-elevated: 222 47% 10%;
-    --code-bg: 222 47% 5%;
+    /* Borders and inputs */
+    --border: 215 20% 85%;
+    --input: 215 20% 85%;
+    --ring: 215 70% 35%;
 
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 160 84% 39%;
+    /* No border radius - rectangular design */
+    --radius: 0px;
+
+    /* Sidebar */
+    --sidebar-background: 215 25% 18%;
+    --sidebar-foreground: 210 15% 90%;
+    --sidebar-primary: 215 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 30% 25%;
+    --sidebar-accent-foreground: 210 15% 95%;
+    --sidebar-border: 215 20% 25%;
+    --sidebar-ring: 215 70% 50%;
+
+    /* Header */
+    --header-background: 215 25% 20%;
+    --header-foreground: 0 0% 100%;
+
+    /* Footer */
+    --footer-background: 210 15% 95%;
+    --footer-foreground: 215 15% 45%;
+
+    /* KPI Cards */
+    --kpi-primary: 215 70% 35%;
+    --kpi-success: 145 60% 40%;
+    --kpi-warning: 40 90% 50%;
+    --kpi-danger: 0 70% 50%;
+  }
+
+  .dark {
+    --background: 215 25% 10%;
+    --foreground: 210 15% 95%;
+
+    --card: 215 25% 15%;
+    --card-foreground: 210 15% 95%;
+
+    --popover: 215 25% 15%;
+    --popover-foreground: 210 15% 95%;
+
+    --primary: 215 70% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 145 45% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 215 20% 20%;
+    --muted-foreground: 210 15% 65%;
+
+    --accent: 45 90% 55%;
+    --accent-foreground: 215 25% 10%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 25%;
+    --input: 215 20% 25%;
+    --ring: 215 70% 50%;
+
+    --sidebar-background: 215 25% 12%;
+    --sidebar-foreground: 210 15% 90%;
+    --sidebar-accent: 215 25% 18%;
+    --sidebar-border: 215 20% 20%;
   }
 }
 
@@ -62,76 +125,99 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
-  code, pre, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+  /* Force rectangular corners globally */
+  *,
+  *::before,
+  *::after {
+    border-radius: 0 !important;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl;
-    background: var(--gradient-card);
+  /* Status indicators */
+  .status-operational {
+    color: hsl(var(--success));
   }
 
-  .hero-gradient {
-    background: var(--gradient-hero);
+  .status-warning {
+    color: hsl(var(--warning));
   }
 
-  .glow-primary {
-    box-shadow: var(--glow-primary);
+  .status-error {
+    color: hsl(var(--destructive));
   }
 
-  .glow-accent {
-    box-shadow: var(--glow-accent);
+  /* KPI Card variants */
+  .kpi-card {
+    @apply bg-card border border-border p-6 shadow-sm transition-shadow hover:shadow-md;
   }
 
-  .code-editor {
-    @apply bg-[hsl(var(--code-bg))] rounded-lg border border-border font-mono text-sm;
+  .kpi-card-primary {
+    @apply border-l-4;
+    border-left-color: hsl(var(--primary));
   }
 
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  .kpi-card-success {
+    @apply border-l-4;
+    border-left-color: hsl(var(--success));
+  }
+
+  .kpi-card-warning {
+    @apply border-l-4;
+    border-left-color: hsl(var(--warning));
+  }
+
+  .kpi-card-danger {
+    @apply border-l-4;
+    border-left-color: hsl(var(--destructive));
+  }
+
+  /* Navigation items */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 transition-colors;
+    color: hsl(var(--sidebar-foreground));
+  }
+  
+  .nav-item:hover {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+  }
+
+  .nav-item-active {
+    @apply border-l-4;
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-primary));
+    border-left-color: hsl(var(--sidebar-primary));
+  }
+
+  /* Table styles */
+  .data-table {
+    @apply w-full border border-border;
+  }
+
+  .data-table th {
+    @apply bg-muted px-4 py-3 text-left text-sm font-semibold text-foreground border-b border-border;
+  }
+
+  .data-table td {
+    @apply px-4 py-3 text-sm border-b border-border;
+  }
+
+  .data-table tr:hover {
+    @apply bg-muted/50;
   }
 }
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-  }
+/* Ethiopian language support */
+@font-face {
+  font-family: 'Nyala';
+  src: local('Nyala');
+  unicode-range: U+1200-137F;
+}
 
-  .animate-slide-up {
-    animation: slideUp 0.6s ease-out forwards;
-  }
-
-  .animate-glow-pulse {
-    animation: glowPulse 3s ease-in-out infinite;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideUp {
-    from { 
-      opacity: 0; 
-      transform: translateY(20px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
-  }
-
-  @keyframes glowPulse {
-    0%, 100% { 
-      box-shadow: var(--glow-primary); 
-    }
-    50% { 
-      box-shadow: 0 0 60px hsl(160 84% 39% / 0.5); 
-    }
-  }
+.amharic-text {
+  font-family: 'Nyala', 'Noto Sans Ethiopic', sans-serif;
 }

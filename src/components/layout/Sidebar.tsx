@@ -5,7 +5,6 @@ import {
   MessageSquare,
   Send,
   FileStack,
-  Clock,
   Inbox,
   BookUser,
   Users,
@@ -14,17 +13,12 @@ import {
   TrendingUp,
   DollarSign,
   FileText,
-  Brain,
-  FileWarning,
   Shield,
   UserCog,
   Settings,
   Server,
   Webhook,
   Route,
-  HeadphonesIcon,
-  Ticket,
-  HelpCircle,
   ScrollText,
   Activity,
   ChevronDown,
@@ -55,7 +49,6 @@ const navItems: NavItem[] = [
     children: [
       { title: "Create SMS", icon: Send, path: "/messaging/create" },
       { title: "Triggered SMS", icon: FileStack, path: "/messaging/triggered-sms" },
-      { title: "Scheduled SMS", icon: Clock, path: "/messaging/scheduled" },
       { title: "Inbox (Replies)", icon: Inbox, path: "/messaging/inbox" },
     ],
   },
@@ -76,23 +69,6 @@ const navItems: NavItem[] = [
       { title: "Delivery Reports", icon: FileText, path: "/reports/delivery" },
       { title: "Operator Performance", icon: TrendingUp, path: "/reports/operators" },
       { title: "Cost Reports", icon: DollarSign, path: "/reports/costs" },
-      { title: "Custom Reports", icon: FileText, path: "/reports/custom" },
-    ],
-  },
-  {
-    title: "AI Content Review",
-    icon: Brain,
-    children: [
-      { title: "AI Logs", icon: FileWarning, path: "/ai/logs" },
-      { title: "Policy Rules", icon: Shield, path: "/ai/policies" },
-    ],
-  },
-  {
-    title: "Users & Roles",
-    icon: UserCog,
-    children: [
-      { title: "Users", icon: Users, path: "/users/list" },
-      { title: "Roles", icon: Shield, path: "/users/roles" },
     ],
   },
   {
@@ -105,19 +81,19 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    title: "Support",
-    icon: HeadphonesIcon,
-    children: [
-      { title: "Tickets", icon: Ticket, path: "/support/tickets" },
-      { title: "Help & Docs", icon: HelpCircle, path: "/support/help" },
-    ],
-  },
-  {
     title: "Audit & Compliance",
     icon: ScrollText,
     children: [
       { title: "Audit Logs", icon: FileText, path: "/audit/logs" },
       { title: "SLA Status", icon: Activity, path: "/audit/sla" },
+    ],
+  },
+  {
+    title: "Users & Roles",
+    icon: UserCog,
+    children: [
+      { title: "Users", icon: Users, path: "/users/list" },
+      { title: "Roles", icon: Shield, path: "/users/roles" },
     ],
   },
 ];

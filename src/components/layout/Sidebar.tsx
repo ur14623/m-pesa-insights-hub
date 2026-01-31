@@ -25,23 +25,36 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SidebarProps {
   isCollapsed: boolean;
 }
 
+interface NavChild {
+  title: string;
+  icon: React.ElementType;
+  path: string;
+}
+
 interface NavItem {
   title: string;
   icon: React.ElementType;
-  path?: string;
-  children?: { title: string; icon: React.ElementType; path: string }[];
+  children: NavChild[];
 }
 
 const navItems: NavItem[] = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    path: "/",
+    children: [
+      { title: "Overview", icon: LayoutDashboard, path: "/" },
+    ],
   },
   {
     title: "Messaging",
@@ -100,7 +113,7 @@ const navItems: NavItem[] = [
 
 const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const location = useLocation();
-  const [expandedItems, setExpandedItems] = useState<string[]>(["Messaging", "Reports"]);
+  const [expandedItems, setExpandedItems] = useState<string[]>(["Dashboard", "Messaging", "Reports"]);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) =>
@@ -110,85 +123,101 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
     );
   };
 
-  const isActive = (path?: string) => {
-    if (!path) return false;
+  const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   const isParentActive = (item: NavItem) => {
-    if (!item.children) return false;
     return item.children.some((child) => location.pathname === child.path);
   };
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-16 h-[calc(100vh-64px)] bg-sidebar border-r border-sidebar-border overflow-y-auto transition-all duration-300 z-40",
-        isCollapsed ? "w-16" : "w-64"
-      )}
-    >
-      <nav className="py-4">
-        {navItems.map((item) => (
-          <div key={item.title}>
-            {item.children ? (
-              <>
-                <button
-                  onClick={() => !isCollapsed && toggleExpanded(item.title)}
-                  className={cn(
-                    "nav-item w-full justify-between",
-                    isParentActive(item) && "text-sidebar-primary",
-                    isCollapsed && "justify-center px-0"
-                  )}
-                  title={isCollapsed ? item.title : undefined}
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    {!isCollapsed && <span className="text-sm">{item.title}</span>}
-                  </div>
-                  {!isCollapsed && (
-                    expandedItems.includes(item.title) ? (
+    <TooltipProvider delayDuration={0}>
+      <aside
+        className={cn(
+          "fixed left-0 top-16 h-[calc(100vh-64px)] bg-sidebar border-r border-sidebar-border overflow-y-auto transition-all duration-300 z-40",
+          isCollapsed ? "w-16" : "w-64"
+        )}
+      >
+        <nav className="py-4">
+          {navItems.map((item) => (
+            <div key={item.title}>
+              {isCollapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className={cn(
+                        "nav-item w-full justify-center px-0",
+                        isParentActive(item) && "text-sidebar-primary bg-sidebar-accent"
+                      )}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="p-0 bg-sidebar border-sidebar-border">
+                    <div className="py-2 min-w-[160px]">
+                      <div className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/70 uppercase">
+                        {item.title}
+                      </div>
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
+                            isActive(child.path) && "bg-sidebar-accent text-sidebar-primary font-medium"
+                          )}
+                        >
+                          <child.icon className="h-4 w-4" />
+                          {child.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <>
+                  <button
+                    onClick={() => toggleExpanded(item.title)}
+                    className={cn(
+                      "nav-item w-full justify-between",
+                      isParentActive(item) && "text-sidebar-primary"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-sm">{item.title}</span>
+                    </div>
+                    {expandedItems.includes(item.title) ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
                       <ChevronRight className="h-4 w-4" />
-                    )
+                    )}
+                  </button>
+                  {expandedItems.includes(item.title) && (
+                    <div className="bg-sidebar-accent/30">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className={cn(
+                            "nav-item pl-12",
+                            isActive(child.path) && "nav-item-active"
+                          )}
+                        >
+                          <child.icon className="h-4 w-4 flex-shrink-0" />
+                          <span className="text-sm">{child.title}</span>
+                        </Link>
+                      ))}
+                    </div>
                   )}
-                </button>
-                {!isCollapsed && expandedItems.includes(item.title) && (
-                  <div className="bg-sidebar-accent/30">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.path}
-                        to={child.path}
-                        className={cn(
-                          "nav-item pl-12",
-                          isActive(child.path) && "nav-item-active"
-                        )}
-                      >
-                        <child.icon className="h-4 w-4 flex-shrink-0" />
-                        <span className="text-sm">{child.title}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <Link
-                to={item.path || "/"}
-                className={cn(
-                  "nav-item",
-                  isActive(item.path) && "nav-item-active",
-                  isCollapsed && "justify-center px-0"
-                )}
-                title={isCollapsed ? item.title : undefined}
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!isCollapsed && <span className="text-sm">{item.title}</span>}
-              </Link>
-            )}
-          </div>
-        ))}
-      </nav>
-    </aside>
+                </>
+              )}
+            </div>
+          ))}
+        </nav>
+      </aside>
+    </TooltipProvider>
   );
 };
 
